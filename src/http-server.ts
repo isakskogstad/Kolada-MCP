@@ -8,12 +8,16 @@ import {
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { kpiTools } from './tools/kpi-tools.js';
 import { municipalityTools } from './tools/municipality-tools.js';
 import { ouTools } from './tools/ou-tools.js';
 import { dataTools } from './tools/data-tools.js';
 import { koladaClient } from './api/client.js';
+import { dataCache } from './utils/cache.js';
+import { analysisPrompts, generatePromptText } from './prompts/analysis-prompts.js';
 import type { Municipality, KPI } from './config/types.js';
 
 const PORT = parseInt(process.env.PORT || '3000');
@@ -59,12 +63,13 @@ function createMCPServer(): Server {
   const server = new Server(
     {
       name: 'kolada-mcp-server',
-      version: '1.0.0',
+      version: '2.0.0',
     },
     {
       capabilities: {
         tools: {},
         resources: {},
+        prompts: {},
       },
     }
   );
@@ -94,6 +99,41 @@ function createMCPServer(): Server {
 
     // Execute tool handler
     return await tool.handler(validatedArgs);
+  });
+
+  // List available prompts
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    return {
+      prompts: Object.values(analysisPrompts).map((prompt) => ({
+        name: prompt.name,
+        description: prompt.description,
+        arguments: prompt.arguments,
+      })),
+    };
+  });
+
+  // Get prompt by name
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    const prompt = analysisPrompts[name];
+    if (!prompt) {
+      throw new Error(`Unknown prompt: ${name}`);
+    }
+
+    const promptText = generatePromptText(prompt, args || {});
+
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: promptText,
+          },
+        },
+      ],
+    };
   });
 
   // List available resources
@@ -128,7 +168,11 @@ function createMCPServer(): Server {
 
     switch (uri) {
       case 'kolada://municipalities': {
-        const municipalities = await koladaClient.fetchAllData<Municipality>('/municipality');
+        const municipalities = await dataCache.getOrFetch(
+          'municipalities',
+          () => koladaClient.fetchAllData<Municipality>('/municipality'),
+          86400000
+        );
         return {
           contents: [
             {
@@ -154,7 +198,11 @@ function createMCPServer(): Server {
       }
 
       case 'kolada://kpi-catalog': {
-        const kpis = await koladaClient.fetchAllData<KPI>('/kpi');
+        const kpis = await dataCache.getOrFetch(
+          'kpi-catalog',
+          () => koladaClient.fetchAllData<KPI>('/kpi'),
+          86400000
+        );
         return {
           contents: [
             {
@@ -244,8 +292,9 @@ async function startHTTPServer() {
     res.json({
       status: 'ok',
       service: 'kolada-mcp-server',
-      version: '1.0.0',
-      authenticated: !!AUTH_TOKEN
+      version: '2.0.0',
+      authenticated: !!AUTH_TOKEN,
+      cache_stats: dataCache.getStats(),
     });
   });
 

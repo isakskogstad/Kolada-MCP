@@ -8,16 +8,39 @@
 
 ## 🌟 Features
 
+### Core Capabilities
+
 - **16 Tools** for comprehensive data access
   - 5 KPI tools (search, retrieve, groups)
   - 4 Municipality tools (search, groups, metadata)
   - 3 Organizational Unit tools (schools, care facilities)
   - 4 Data Retrieval tools (KPI data, comparisons, trends)
 
+- **6 Prompts** for guided analysis workflows 🆕 v2.0
+  - Municipality analysis and comparisons
+  - Trend analysis over time
+  - School discovery and evaluation
+  - Regional performance comparisons
+  - KPI exploration and discovery
+
 - **3 Resources** for metadata catalogs
   - Complete municipalities list
   - Full KPI catalog
   - API information and documentation
+
+### Performance & Reliability 🆕 v2.0
+
+- **Intelligent Caching**
+  - In-memory cache with 24h TTL for metadata
+  - Reduces API calls by up to 90%
+  - Automatic cache cleanup
+  - Cache statistics in health endpoint
+
+- **Enhanced Error Handling**
+  - MCP-compliant error codes
+  - Input validation (KPI IDs, municipality IDs, OU IDs)
+  - Helpful error messages with suggestions
+  - Context-aware error reporting
 
 - **Dual Transport Support**
   - **stdio** - For Claude Desktop and CLI tools
@@ -146,6 +169,61 @@ After deployment:
 - **Cyclic** - 10k requests/month - [Guide](./LOVABLE.md#cyclic)
 
 See [FREE-HOSTING.md](./FREE-HOSTING.md) for detailed comparison and [DEPLOY-RENDER.md](./DEPLOY-RENDER.md) for step-by-step Render deployment.
+
+## 🎯 Prompts (v2.0)
+
+Kolada MCP Server includes 6 guided analysis workflows that help AI assistants perform common analysis tasks:
+
+### Available Prompts
+
+#### `analyze_municipality`
+Comprehensive analysis of a Swedish municipality's performance.
+
+**Arguments:**
+- `municipality_name` (required): Name of the municipality (e.g., "Stockholm", "Göteborg")
+- `focus_areas` (optional): Specific areas to focus on (e.g., "education", "healthcare")
+
+**Example:**
+```
+Use prompt: analyze_municipality
+Arguments: { municipality_name: "Stockholm", focus_areas: "education and environment" }
+```
+
+#### `compare_municipalities`
+Compare multiple municipalities on selected performance indicators.
+
+**Arguments:**
+- `municipalities` (required): Comma-separated list of municipality names
+- `kpi_topics` (required): Topics to compare (e.g., "schools", "healthcare quality")
+
+#### `trend_analysis`
+Analyze trends over time for specific performance indicators.
+
+**Arguments:**
+- `municipality` (required): Municipality name to analyze
+- `topic` (required): Topic area (e.g., "education quality", "elderly care")
+- `years` (optional): Number of years to analyze (default: 5)
+
+#### `find_schools`
+Find and analyze schools and educational institutions.
+
+**Arguments:**
+- `municipality` (required): Municipality to search in
+- `school_type` (optional): Type of school (e.g., "grundskola", "gymnasium")
+- `school_name` (optional): Specific school name to search for
+
+#### `regional_comparison`
+Compare municipalities within the same region or group.
+
+**Arguments:**
+- `region` (required): Region name or municipality group (e.g., "Stockholm län")
+
+#### `kpi_discovery`
+Discover and explore available key performance indicators.
+
+**Arguments:**
+- `query` (optional): Search keywords for KPIs
+- `operating_area` (optional): Operating area filter (e.g., "Utbildning")
 
 ## 🛠️ Available Tools
 

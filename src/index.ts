@@ -7,12 +7,16 @@ import {
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { kpiTools } from './tools/kpi-tools.js';
 import { municipalityTools } from './tools/municipality-tools.js';
 import { ouTools } from './tools/ou-tools.js';
 import { dataTools } from './tools/data-tools.js';
 import { koladaClient } from './api/client.js';
+import { dataCache } from './utils/cache.js';
+import { analysisPrompts, generatePromptText } from './prompts/analysis-prompts.js';
 import type { Municipality, KPI } from './config/types.js';
 
 /**
@@ -32,12 +36,13 @@ const allTools = {
 const server = new Server(
   {
     name: 'kolada-mcp-server',
-    version: '1.0.0',
+    version: '2.0.0',
   },
   {
     capabilities: {
       tools: {},
       resources: {},
+      prompts: {},
     },
   }
 );
@@ -71,6 +76,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   // Execute tool handler
   return await tool.handler(validatedArgs);
+});
+
+/**
+ * List available prompts
+ */
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: Object.values(analysisPrompts).map((prompt) => ({
+      name: prompt.name,
+      description: prompt.description,
+      arguments: prompt.arguments,
+    })),
+  };
+});
+
+/**
+ * Get prompt by name
+ */
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  const prompt = analysisPrompts[name];
+  if (!prompt) {
+    throw new Error(`Unknown prompt: ${name}`);
+  }
+
+  const promptText = generatePromptText(prompt, args || {});
+
+  return {
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: promptText,
+        },
+      },
+    ],
+  };
 });
 
 /**
@@ -109,7 +153,12 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 
   switch (uri) {
     case 'kolada://municipalities': {
-      const municipalities = await koladaClient.fetchAllData<Municipality>('/municipality');
+      // Use cache for municipalities list (24h TTL)
+      const municipalities = await dataCache.getOrFetch(
+        'municipalities',
+        () => koladaClient.fetchAllData<Municipality>('/municipality'),
+        86400000 // 24 hours
+      );
       return {
         contents: [
           {
@@ -135,7 +184,12 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     }
 
     case 'kolada://kpi-catalog': {
-      const kpis = await koladaClient.fetchAllData<KPI>('/kpi');
+      // Use cache for KPI catalog (24h TTL)
+      const kpis = await dataCache.getOrFetch(
+        'kpi-catalog',
+        () => koladaClient.fetchAllData<KPI>('/kpi'),
+        86400000 // 24 hours
+      );
       return {
         contents: [
           {

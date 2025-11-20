@@ -1,5 +1,13 @@
 import { z } from 'zod';
 import { koladaClient } from '../api/client.js';
+import {
+  createMcpError,
+  KoladaErrorType,
+  ERROR_MESSAGES,
+  validateKpiId,
+  validateBatchSize,
+  handleApiError,
+} from '../utils/errors.js';
 import type { KPI, KPIGroup } from '../config/types.js';
 
 /**
@@ -72,31 +80,30 @@ export const kpiTools = {
     handler: async (args: any) => {
       const { kpi_id } = args;
 
-      const response = await koladaClient.request<KPI>(`/kpi/${kpi_id}`);
+      try {
+        // Validate KPI ID format
+        validateKpiId(kpi_id);
 
-      if (response.values.length === 0) {
+        const response = await koladaClient.request<KPI>(`/kpi/${kpi_id}`);
+
+        if (response.values.length === 0) {
+          const error = ERROR_MESSAGES.KPI_NOT_FOUND(kpi_id);
+          throw createMcpError(KoladaErrorType.NOT_FOUND, error.message, {
+            suggestion: error.suggestion,
+          });
+        }
+
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                error: 'NOT_FOUND',
-                message: `KPI with ID "${kpi_id}" not found`,
-                suggestion: 'Use search_kpis to find valid KPI IDs',
-              }),
+              text: JSON.stringify(response.values[0], null, 2),
             },
           ],
         };
+      } catch (error) {
+        handleApiError(error, `get_kpi(${kpi_id})`);
       }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(response.values[0], null, 2),
-          },
-        ],
-      };
     },
   },
 
@@ -111,23 +118,33 @@ export const kpiTools = {
     handler: async (args: any) => {
       const { kpi_ids } = args;
 
-      const kpis = await koladaClient.batchRequest<KPI>('/kpi', kpi_ids);
+      try {
+        // Validate batch size
+        validateBatchSize(kpi_ids, 25);
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                count: kpis.length,
-                kpis,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+        // Validate each KPI ID format
+        kpi_ids.forEach((id: string) => validateKpiId(id));
+
+        const kpis = await koladaClient.batchRequest<KPI>('/kpi', kpi_ids);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  count: kpis.length,
+                  kpis,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        handleApiError(error, 'get_kpis');
+      }
     },
   },
 
@@ -181,31 +198,27 @@ export const kpiTools = {
     handler: async (args: any) => {
       const { group_id } = args;
 
-      const response = await koladaClient.request<KPIGroup>(`/kpi_groups/${group_id}`);
+      try {
+        const response = await koladaClient.request<KPIGroup>(`/kpi_groups/${group_id}`);
 
-      if (response.values.length === 0) {
+        if (response.values.length === 0) {
+          const error = ERROR_MESSAGES.GROUP_NOT_FOUND(group_id, 'KPI');
+          throw createMcpError(KoladaErrorType.NOT_FOUND, error.message, {
+            suggestion: error.suggestion,
+          });
+        }
+
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                error: 'NOT_FOUND',
-                message: `KPI group with ID "${group_id}" not found`,
-                suggestion: 'Use get_kpi_groups to find valid group IDs',
-              }),
+              text: JSON.stringify(response.values[0], null, 2),
             },
           ],
         };
+      } catch (error) {
+        handleApiError(error, `get_kpi_group(${group_id})`);
       }
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(response.values[0], null, 2),
-          },
-        ],
-      };
     },
   },
 };
