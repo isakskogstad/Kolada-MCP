@@ -11,6 +11,7 @@ import {
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { kpiTools } from './tools/kpi-tools.js';
 import { municipalityTools } from './tools/municipality-tools.js';
 import { ouTools } from './tools/ou-tools.js';
@@ -21,32 +22,6 @@ import { analysisPrompts, generatePromptText } from './prompts/analysis-prompts.
 import type { Municipality, KPI } from './config/types.js';
 
 const PORT = parseInt(process.env.PORT || '3000');
-const AUTH_TOKEN = process.env.MCP_AUTH_TOKEN;
-
-/**
- * Authentication middleware
- */
-function authenticate(req: Request, res: Response, next: NextFunction) {
-  // Skip auth if no token is configured (development mode)
-  if (!AUTH_TOKEN) {
-    console.warn('⚠️  Warning: Running without authentication. Set MCP_AUTH_TOKEN for production.');
-    return next();
-  }
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
-  }
-
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-  if (token !== AUTH_TOKEN) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-
-  next();
-}
 
 // Combine all tools
 const allTools = {
@@ -80,7 +55,7 @@ function createMCPServer(): Server {
       tools: Object.entries(allTools).map(([name, tool]) => ({
         name,
         description: tool.description,
-        inputSchema: tool.inputSchema.shape,
+        inputSchema: zodToJsonSchema(tool.inputSchema),
       })),
     };
   });
@@ -293,13 +268,13 @@ async function startHTTPServer() {
       status: 'ok',
       service: 'kolada-mcp-server',
       version: '2.0.0',
-      authenticated: !!AUTH_TOKEN,
+      access: 'open',
       cache_stats: dataCache.getStats(),
     });
   });
 
-  // MCP SSE endpoint with authentication
-  app.get('/sse', authenticate, async (req, res) => {
+  // MCP SSE endpoint (open access)
+  app.get('/sse', async (req, res) => {
     console.log('📡 New SSE connection established');
 
     const server = createMCPServer();
@@ -314,13 +289,13 @@ async function startHTTPServer() {
   });
 
   // MCP message endpoint (for sending messages via POST)
-  app.post('/message', authenticate, async (req, res) => {
+  app.post('/message', async (req, res) => {
     console.log('📨 Received message:', req.body);
     res.json({ received: true });
   });
 
   // JSON-RPC endpoint (for direct POST requests without SSE)
-  app.post('/rpc', authenticate, async (req, res) => {
+  app.post('/rpc', async (req, res) => {
     try {
       const server = createMCPServer();
       const request = req.body;
@@ -350,7 +325,7 @@ async function startHTTPServer() {
         const tools = Object.entries(allTools).map(([name, tool]) => ({
           name,
           description: tool.description,
-          inputSchema: tool.inputSchema,
+          inputSchema: zodToJsonSchema(tool.inputSchema),
         }));
         response = {
           jsonrpc: '2.0',
@@ -515,15 +490,16 @@ async function startHTTPServer() {
 ╟──────────────────────────────────────────────────────────╢
 ║  Port:           ${PORT.toString().padEnd(42)}║
 ║  SSE Endpoint:   /sse${' '.repeat(42)}║
+║  RPC Endpoint:   /rpc${' '.repeat(42)}║
 ║  Health Check:   /health${' '.repeat(38)}║
-║  Auth:           ${(AUTH_TOKEN ? '✅ Enabled' : '⚠️  Disabled (dev mode)').padEnd(42)}║
+║  Auth:           🌐 Open Access (No authentication)${' '.repeat(10)}║
 ╚══════════════════════════════════════════════════════════╝
 
-📖 Usage with Lovable:
-   Endpoint: http://localhost:${PORT}/sse
-   ${AUTH_TOKEN ? `Auth: Bearer ${AUTH_TOKEN.substring(0, 20)}...` : 'No authentication required'}
+📖 Usage with LLMs (Lovable, etc):
+   SSE Endpoint: http://localhost:${PORT}/sse
+   RPC Endpoint: http://localhost:${PORT}/rpc
 
-💡 Set MCP_AUTH_TOKEN environment variable for production
+   No authentication required - open access for all LLMs
     `);
   });
 }

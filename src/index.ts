@@ -10,6 +10,7 @@ import {
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { kpiTools } from './tools/kpi-tools.js';
 import { municipalityTools } from './tools/municipality-tools.js';
 import { ouTools } from './tools/ou-tools.js';
@@ -55,7 +56,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: Object.entries(allTools).map(([name, tool]) => ({
       name,
       description: tool.description,
-      inputSchema: tool.inputSchema.shape,
+      inputSchema: zodToJsonSchema(tool.inputSchema),
     })),
   };
 });
