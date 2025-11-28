@@ -66,6 +66,27 @@ async function startHTTPServer() {
     res.json(response);
   });
 
+  // MCP endpoint - standard path for remote MCP servers
+  // Supports both GET (SSE) and POST (JSON-RPC) for maximum compatibility
+  app.get('/mcp', async (req, res) => {
+    logger.info('MCP SSE connection via /mcp', { ip: req.ip });
+
+    const server = createMCPServer();
+    const transport = new SSEServerTransport('/mcp', res);
+
+    await server.connect(transport);
+
+    req.on('close', () => {
+      logger.info('MCP SSE connection closed', { ip: req.ip });
+    });
+  });
+
+  app.post('/mcp', async (req, res) => {
+    logger.debug('MCP RPC request via /mcp', { body: req.body });
+    const response = await handleRPCRequest(req.body);
+    res.json(response);
+  });
+
   app.listen(PORT, () => {
     logger.info('HTTP server started', { port: PORT, version: VERSION });
 
@@ -74,13 +95,15 @@ async function startHTTPServer() {
 ║  🚀 Kolada MCP HTTP Server v${VERSION}                       ║
 ╟──────────────────────────────────────────────────────────╢
 ║  Port:           ${PORT.toString().padEnd(42)}║
+║  MCP Endpoint:   /mcp (recommended for remote clients)   ║
 ║  SSE Endpoint:   /sse                                    ║
 ║  RPC Endpoint:   /rpc                                    ║
 ║  Health Check:   /health                                 ║
 ║  Auth:           🌐 Open Access (No authentication)      ║
 ╚══════════════════════════════════════════════════════════╝
 
-📖 Usage with LLMs (Lovable, etc):
+📖 Usage:
+   Remote MCP (ChatGPT, Claude Web): http://localhost:${PORT}/mcp
    SSE Endpoint: http://localhost:${PORT}/sse
    RPC Endpoint: http://localhost:${PORT}/rpc
 
