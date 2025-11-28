@@ -74,15 +74,34 @@
 
 - **TypeScript** with full type safety and IntelliSense support
 
-## 📦 Installation
+## 📦 Quick Start
 
-### As an npm package
+### Option 1: Remote Server (Recommended for ChatGPT, Claude Web)
+
+**No installation required!** Use the public MCP server:
+
+```
+https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+Configure in your MCP client:
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+### Option 2: Local Installation (Claude Code, Cursor, etc.)
 
 ```bash
 npm install -g kolada-mcp-server
 ```
 
-### From source
+Or from source:
 
 ```bash
 git clone https://github.com/isakskogstad/kolada-mcp.git
@@ -91,7 +110,7 @@ npm install
 npm run build
 ```
 
-## 🚀 Usage with Claude Desktop
+## 🚀 Usage with Claude Desktop/Claude Code
 
 Add to your Claude Desktop configuration file:
 
@@ -123,43 +142,58 @@ Or if installed via npm:
 
 Restart Claude Desktop to load the server.
 
-## 🌐 Usage with Lovable (HTTP Mode)
+## 🌐 Remote MCP Server (ChatGPT, Claude Web, Lovable)
 
-The server supports HTTP/SSE transport with token authentication for use with [Lovable](https://lovable.dev) and other HTTP-based MCP clients.
+The Kolada MCP server is available as a public remote server - **no installation required!**
 
-### Quick Start
+### Public Server URL
 
-1. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env and set MCP_AUTH_TOKEN to a secure token
-   ```
+```
+https://kolada-mcp-pafn.onrender.com/mcp
+```
 
-2. **Generate a secure token:**
-   ```bash
-   openssl rand -base64 32
-   ```
+### Available Endpoints
 
-3. **Start the HTTP server:**
-   ```bash
-   npm run dev:http  # Development
-   npm run start:http # Production (after npm run build)
-   ```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/mcp` | GET/POST | Standard MCP endpoint (recommended) |
+| `/sse` | GET | Server-Sent Events for streaming |
+| `/rpc` | POST | JSON-RPC direct requests |
+| `/health` | GET | Health check |
 
-4. **Configure in Lovable:**
-   ```json
-   {
-     "mcpServers": {
-       "kolada": {
-         "url": "http://localhost:3000/sse",
-         "transport": "sse",
-         "headers": {
-           "Authorization": "Bearer your-token-here"
-         }
-       }
-     }
-   }
-   ```
+### Configuration Examples
+
+**For ChatGPT / Claude Web / Generic MCP Client:**
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+**For Lovable (SSE transport):**
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/sse",
+      "transport": "sse"
+    }
+  }
+}
+```
+
+### Self-Hosting (Optional)
+
+If you prefer to run your own HTTP server:
+
+```bash
+npm run dev:http  # Development
+npm run start:http # Production (after npm run build)
+```
 
 See [LOVABLE.md](./LOVABLE.md) for complete deployment guide including Render, Railway, and Docker.
 
