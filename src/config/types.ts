@@ -103,17 +103,6 @@ export interface ToolAnnotations {
 }
 
 /**
- * Extended tool definition with annotations
- */
-export interface ToolDefinition<TInput extends z.ZodType = z.ZodType> {
-  name: string;
-  description: string;
-  inputSchema: TInput;
-  annotations: ToolAnnotations;
-  handler: (args: z.infer<TInput>) => Promise<ToolResult>;
-}
-
-/**
  * Standard MCP tool result
  */
 export interface ToolResult {
@@ -125,26 +114,6 @@ export interface ToolResult {
     uri?: string;
   }>;
   isError?: boolean;
-}
-
-// =============================================================================
-// Error Types
-// =============================================================================
-
-export type ErrorCode =
-  | 'NOT_FOUND'
-  | 'INVALID_INPUT'
-  | 'API_ERROR'
-  | 'RATE_LIMITED'
-  | 'NETWORK_ERROR'
-  | 'VALIDATION_ERROR';
-
-export interface ToolError {
-  isError: true;
-  code: ErrorCode;
-  message: string;
-  details?: unknown;
-  suggestion?: string;
 }
 
 // =============================================================================

@@ -30,16 +30,8 @@ export const KOLADA_CONFIG = {
   },
 } as const;
 
+// Simple error messages for API client
 export const ERROR_MESSAGES = {
-  NOT_FOUND: 'Resource not found',
-  INVALID_INPUT: 'Invalid input parameters',
   API_ERROR: 'Kolada API error',
-  RATE_LIMITED: 'Rate limit exceeded',
   NETWORK_ERROR: 'Network connection error',
-} as const;
-
-export const MUNICIPALITY_TYPES = {
-  K: 'Kommun (Municipality)',
-  L: 'Landsting/Region (County Council)',
-  ALL: 'Alla (All types)',
 } as const;
