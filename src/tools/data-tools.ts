@@ -76,13 +76,26 @@ export const dataTools = {
       }
 
       try {
-        const params: Record<string, string> = { kpi: kpi_id };
-        if (municipality_id) params.municipality = municipality_id;
-        if (ou_id) params.ou = ou_id;
-        if (years) params.year = years.join(',');
+        // Kolada API v3 uses path-based URLs for data
+        let endpoint: string;
+        if (ou_id) {
+          endpoint = `/oudata/kpi/${kpi_id}/ou/${ou_id}`;
+          if (years && years.length > 0) {
+            endpoint += `/year/${years.join(',')}`;
+          }
+        } else if (municipality_id) {
+          endpoint = `/data/kpi/${kpi_id}/municipality/${municipality_id}`;
+          if (years && years.length > 0) {
+            endpoint += `/year/${years.join(',')}`;
+          }
+        } else {
+          endpoint = `/data/kpi/${kpi_id}`;
+          if (years && years.length > 0) {
+            endpoint += `/year/${years.join(',')}`;
+          }
+        }
 
-        const endpoint = ou_id ? '/oudata' : '/data';
-        const data = await koladaClient.fetchAllData<KPIData>(endpoint, params);
+        const data = await koladaClient.fetchAllData<KPIData>(endpoint);
 
         logger.toolResult('get_kpi_data', true, Date.now() - startTime);
 
@@ -124,10 +137,17 @@ export const dataTools = {
       logger.toolCall('get_municipality_kpis', { municipality_id, year });
 
       try {
-        const params: Record<string, string | number> = { municipality: municipality_id };
-        if (year) params.year = year;
+        // Kolada API v3 uses path-based URLs
+        // Note: This endpoint returns a LOT of data, so we only fetch first page
+        // and extract unique KPIs from that sample
+        let endpoint = `/data/municipality/${municipality_id}`;
+        if (year) {
+          endpoint += `/year/${year}`;
+        }
 
-        const data = await koladaClient.fetchAllData<KPIData>('/data', params);
+        // Just get first page to avoid timeout - this is a discovery tool
+        const response = await koladaClient.request<KPIData>(endpoint, { per_page: 5000 });
+        const data = response.values || [];
 
         // Extract unique KPI IDs
         const kpiIds = [...new Set(data.map((d) => d.kpi))];
@@ -187,13 +207,13 @@ export const dataTools = {
 
         // Fetch data for all municipalities in parallel for better performance
         const promises = municipality_ids.map(async (municipality_id) => {
-          const params: Record<string, string> = {
-            kpi: kpi_id,
-            municipality: municipality_id,
-          };
-          if (years) params.year = years.join(',');
+          // Kolada API v3 uses path-based URLs
+          let endpoint = `/data/kpi/${kpi_id}/municipality/${municipality_id}`;
+          if (years && years.length > 0) {
+            endpoint += `/year/${years.join(',')}`;
+          }
 
-          const data = await koladaClient.fetchAllData<KPIData>('/data', params);
+          const data = await koladaClient.fetchAllData<KPIData>(endpoint);
 
           return {
             municipality_id,
@@ -243,13 +263,10 @@ export const dataTools = {
         const endYr = end_year || new Date().getFullYear();
         const years = Array.from({ length: endYr - start_year + 1 }, (_, i) => start_year + i);
 
-        const params: Record<string, string> = {
-          kpi: kpi_id,
-          municipality: municipality_id,
-          year: years.join(','),
-        };
+        // Kolada API v3 uses path-based URLs
+        const endpoint = `/data/kpi/${kpi_id}/municipality/${municipality_id}/year/${years.join(',')}`;
 
-        const data = await koladaClient.fetchAllData<KPIData>('/data', params);
+        const data = await koladaClient.fetchAllData<KPIData>(endpoint);
 
         // Calculate year-over-year changes if data exists
         const trend = data.map((d, index) => {
