@@ -4,7 +4,8 @@
 
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/KSAklfszf921/kolada-mcp-server)
+[![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/KOLADA-MCP)
 
 ## 🌟 Features
 
@@ -16,7 +17,7 @@
   - 3 Organizational Unit tools (schools, care facilities)
   - 4 Data Retrieval tools (KPI data, comparisons, trends)
 
-- **6 Prompts** for guided analysis workflows 🆕 v2.0
+- **6 Prompts** for guided analysis workflows
   - Municipality analysis and comparisons
   - Trend analysis over time
   - School discovery and evaluation
@@ -28,7 +29,26 @@
   - Full KPI catalog
   - API information and documentation
 
-### Performance & Reliability 🆕 v2.0
+### What's New in v2.1.0
+
+- **Tool Annotations (MCP 2024-11-05)** 🆕
+  - `readOnlyHint: true` - All tools are read-only
+  - `idempotentHint: true` - Safe to call multiple times
+  - `destructiveHint: false` - No destructive operations
+  - `openWorldHint: false` - Closed-world data access
+
+- **Structured Logging** 🆕
+  - JSON-formatted logs to stderr
+  - Tool call tracking with timing
+  - Cache hit/miss statistics
+  - API request/response logging
+
+- **Refactored Architecture** 🆕
+  - Shared handlers module eliminates code duplication
+  - Cleaner separation of concerns
+  - Easier maintenance and testing
+
+### Performance & Reliability
 
 - **Intelligent Caching**
   - In-memory cache with 24h TTL for metadata
@@ -45,7 +65,7 @@
 - **Dual Transport Support**
   - **stdio** - For Claude Desktop and CLI tools
   - **HTTP/SSE** - For Lovable and web-based clients
-  - Token authentication for HTTP mode
+  - Open access (no authentication required)
 
 - **Rate Limiting & Retry Logic**
   - Automatic rate limiting (5 req/s)
@@ -434,17 +454,26 @@ Assistant uses:
 ```
 kolada-mcp-server/
 ├── src/
-│   ├── index.ts                 # Main MCP server entry point
+│   ├── index.ts                 # Stdio entry point
+│   ├── http-server.ts           # HTTP/SSE entry point
+│   ├── server/
+│   │   └── handlers.ts          # Shared MCP handlers (v2.1)
 │   ├── config/
 │   │   ├── constants.ts         # API configuration
 │   │   └── types.ts             # TypeScript type definitions
 │   ├── api/
 │   │   └── client.ts            # HTTP client with rate limiting
-│   └── tools/
-│       ├── kpi-tools.ts         # KPI search & retrieval tools
-│       ├── municipality-tools.ts # Municipality tools
-│       ├── ou-tools.ts          # Organizational unit tools
-│       └── data-tools.ts        # Data retrieval tools
+│   ├── tools/
+│   │   ├── kpi-tools.ts         # KPI search & retrieval tools
+│   │   ├── municipality-tools.ts # Municipality tools
+│   │   ├── ou-tools.ts          # Organizational unit tools
+│   │   └── data-tools.ts        # Data retrieval tools
+│   ├── prompts/
+│   │   └── analysis-prompts.ts  # Analysis prompt templates
+│   └── utils/
+│       ├── cache.ts             # In-memory caching
+│       ├── errors.ts            # Error handling utilities
+│       └── logger.ts            # Structured logging (v2.1)
 ├── dist/                        # Compiled JavaScript
 └── package.json
 ```

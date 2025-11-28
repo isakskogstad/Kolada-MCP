@@ -1,6 +1,13 @@
 /**
- * Type definitions for Kolada API v3
+ * Type definitions for Kolada API v3 and MCP Server
+ * @version 2.1.0
  */
+
+import { z } from 'zod';
+
+// =============================================================================
+// Kolada API Types
+// =============================================================================
 
 export interface KPI {
   id: string;
@@ -65,10 +72,107 @@ export interface KoladaResponse<T> {
   previous_page?: string;
 }
 
+// =============================================================================
+// MCP Tool Annotations (2024-11-05 spec)
+// =============================================================================
+
+/**
+ * Tool annotations provide hints about tool behavior to help LLMs
+ * make better decisions about when and how to use tools.
+ */
+export interface ToolAnnotations {
+  /**
+   * If true, the tool does not modify any state (safe to call multiple times)
+   */
+  readOnlyHint?: boolean;
+
+  /**
+   * If true, calling the tool multiple times with same args gives same result
+   */
+  idempotentHint?: boolean;
+
+  /**
+   * If true, the tool may perform destructive operations
+   */
+  destructiveHint?: boolean;
+
+  /**
+   * If true, the tool interacts with the real world (not just data retrieval)
+   */
+  openWorldHint?: boolean;
+}
+
+/**
+ * Extended tool definition with annotations
+ */
+export interface ToolDefinition<TInput extends z.ZodType = z.ZodType> {
+  name: string;
+  description: string;
+  inputSchema: TInput;
+  annotations: ToolAnnotations;
+  handler: (args: z.infer<TInput>) => Promise<ToolResult>;
+}
+
+/**
+ * Standard MCP tool result
+ */
+export interface ToolResult {
+  content: Array<{
+    type: 'text' | 'image' | 'resource';
+    text?: string;
+    data?: string;
+    mimeType?: string;
+    uri?: string;
+  }>;
+  isError?: boolean;
+}
+
+// =============================================================================
+// Error Types
+// =============================================================================
+
+export type ErrorCode =
+  | 'NOT_FOUND'
+  | 'INVALID_INPUT'
+  | 'API_ERROR'
+  | 'RATE_LIMITED'
+  | 'NETWORK_ERROR'
+  | 'VALIDATION_ERROR';
+
 export interface ToolError {
   isError: true;
-  code: 'NOT_FOUND' | 'INVALID_INPUT' | 'API_ERROR' | 'RATE_LIMITED' | 'NETWORK_ERROR';
+  code: ErrorCode;
   message: string;
-  details?: any;
+  details?: unknown;
   suggestion?: string;
+}
+
+// =============================================================================
+// Logger Types
+// =============================================================================
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  context?: Record<string, unknown>;
+}
+
+// =============================================================================
+// Cache Types
+// =============================================================================
+
+export interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+export interface CacheStats {
+  total: number;
+  valid: number;
+  expired: number;
+  size_bytes: number;
 }
