@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/KOLADA-MCP)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/kolada-mcp)
 
 ## 🌟 Features
 
@@ -85,8 +85,8 @@ npm install -g kolada-mcp-server
 ### From source
 
 ```bash
-git clone https://github.com/KSAklfszf921/kolada-mcp-server.git
-cd kolada-mcp-server
+git clone https://github.com/isakskogstad/kolada-mcp.git
+cd kolada-mcp
 npm install
 npm run build
 ```
@@ -169,7 +169,7 @@ See [LOVABLE.md](./LOVABLE.md) for complete deployment guide including Render, R
 
 Click the button to deploy to Render's free tier:
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/KSAklfszf921/kolada-mcp-server)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/kolada-mcp)
 
 After deployment:
 1. Set `MCP_AUTH_TOKEN` in Render Dashboard

@@ -3,8 +3,6 @@ import {
   createMcpError,
   KoladaErrorType,
   validateKpiId,
-  validateMunicipalityId,
-  validateOuId,
   validateBatchSize,
 } from '../../src/utils/errors';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -46,34 +44,6 @@ describe('Error Utilities', () => {
       expect(() => validateKpiId('N123')).toThrow(McpError);
       expect(() => validateKpiId('X15033')).toThrow(McpError);
       expect(() => validateKpiId('')).toThrow(McpError);
-    });
-  });
-
-  describe('validateMunicipalityId', () => {
-    it('should accept valid municipality IDs', () => {
-      expect(() => validateMunicipalityId('0180')).not.toThrow();
-      expect(() => validateMunicipalityId('1480')).not.toThrow();
-    });
-
-    it('should reject invalid municipality IDs', () => {
-      expect(() => validateMunicipalityId('123')).toThrow(McpError);
-      expect(() => validateMunicipalityId('12345')).toThrow(McpError);
-      expect(() => validateMunicipalityId('ABC')).toThrow(McpError);
-      expect(() => validateMunicipalityId('')).toThrow(McpError);
-    });
-  });
-
-  describe('validateOuId', () => {
-    it('should accept valid OU IDs', () => {
-      expect(() => validateOuId('V1101234')).not.toThrow();
-      expect(() => validateOuId('V1500001')).not.toThrow();
-    });
-
-    it('should reject invalid OU IDs', () => {
-      expect(() => validateOuId('123456')).toThrow(McpError);
-      expect(() => validateOuId('V1')).toThrow(McpError);
-      expect(() => validateOuId('U1101234')).toThrow(McpError);
-      expect(() => validateOuId('')).toThrow(McpError);
     });
   });
 

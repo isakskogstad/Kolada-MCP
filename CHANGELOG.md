@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-29
+
+### Added
+- **Tool Annotations (MCP 2024-11-05)** - All tools now include:
+  - `readOnlyHint: true` - Indicates read-only operations
+  - `idempotentHint: true` - Safe to call multiple times
+  - `destructiveHint: false` - No destructive operations
+  - `openWorldHint: false` - Closed-world data access
+
+- **Structured Logging** - JSON-formatted logs to stderr:
+  - Tool call tracking with timing
+  - Cache hit/miss statistics
+  - API request/response logging
+
+- **Refactored Architecture** - Shared handlers module:
+  - Cleaner separation of concerns
+  - Eliminates code duplication between stdio and HTTP
+  - Easier maintenance and testing
+
+### Changed
+- Upgraded `@modelcontextprotocol/sdk` from 1.0.4 to 1.23.0
+- Updated server version to 2.1.0
+
+### Removed
+- Removed unused code and dead types (~95 lines)
+- Removed test shell scripts with hardcoded credentials
+- Cleaned up unused validation functions
+
 ## [2.0.0] - 2025-01-20
 
 ### Added ✨
@@ -73,5 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript support
 - Documentation and examples
 
-[2.0.0]: https://github.com/KSAklfszf921/kolada-mcp-server/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/KSAklfszf921/kolada-mcp-server/releases/tag/v1.0.0
+[2.1.0]: https://github.com/isakskogstad/KOLADA-MCP/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/isakskogstad/KOLADA-MCP/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/isakskogstad/KOLADA-MCP/releases/tag/v1.0.0

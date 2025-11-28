@@ -5,7 +5,7 @@
 ### Steg 1: Klicka på Deploy-knappen
 När denna är pushad till GitHub, använd denna URL:
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/KSAklfszf921/kolada-mcp-server)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/kolada-mcp)
 
 ### Steg 2: Konfigurera
 1. **Service Name**: `kolada-mcp` (eller välj eget)
@@ -15,7 +15,7 @@ När denna är pushad till GitHub, använd denna URL:
 ### Steg 3: Sätt Environment Variables
 I Render Dashboard:
 1. Gå till Environment
-2. Lägg till `MCP_AUTH_TOKEN` = `Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U=`
+2. Lägg till `MCP_AUTH_TOKEN` = `<din-token>` (generera med: `openssl rand -base64 32`)
 3. Save Changes (auto-deploy)
 
 ### Steg 4: Hämta URL
@@ -31,7 +31,7 @@ Efter deploy (tar 2-3 min):
       "url": "https://kolada-mcp.onrender.com/sse",
       "transport": "sse",
       "headers": {
-        "Authorization": "Bearer Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U="
+        "Authorization": "Bearer <din-token>"
       }
     }
   }
@@ -50,7 +50,7 @@ Efter deploy (tar 2-3 min):
 
 ### Steg 2: New Web Service
 1. Dashboard → **New +** → **Web Service**
-2. Connect repository: `KSAklfszf921/kolada-mcp-server`
+2. Connect repository: `isakskogstad/kolada-mcp`
 3. Om inte listad: Configure Account → Install Render
 
 ### Steg 3: Konfigurera Service
@@ -70,7 +70,7 @@ Klicka **Advanced** → Add Environment Variable:
 
 ```
 MCP_MODE = http
-MCP_AUTH_TOKEN = Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U=
+MCP_AUTH_TOKEN = <din-token>
 ```
 
 ### Steg 5: Create Web Service

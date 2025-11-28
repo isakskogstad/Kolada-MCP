@@ -14,7 +14,7 @@
 1. Gå till https://render.com
 2. Skapa konto (gratis med GitHub)
 3. New → Web Service
-4. Anslut GitHub repo: KSAklfszf921/kolada-mcp-server
+4. Anslut GitHub repo: isakskogstad/kolada-mcp
 5. Konfigurera:
    - Name: kolada-mcp
    - Build Command: `npm install && npm run build`
@@ -22,7 +22,7 @@
    - Instance Type: **Free**
 6. Environment Variables:
    - `MCP_MODE` = `http`
-   - `MCP_AUTH_TOKEN` = `Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U=`
+   - `MCP_AUTH_TOKEN` = `<din-token>` (generera med: `openssl rand -base64 32`)
 7. Deploy!
 
 Du får URL: `https://kolada-mcp.onrender.com/sse`
@@ -45,7 +45,7 @@ Du får URL: `https://kolada-mcp.onrender.com/sse`
 4. Railway auto-detekterar Node.js
 5. Environment Variables:
    - `MCP_MODE` = `http`
-   - `MCP_AUTH_TOKEN` = `Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U=`
+   - `MCP_AUTH_TOKEN` = `<din-token>` (generera med: `openssl rand -base64 32`)
 6. Generate Domain
 7. Deploy!
 
@@ -68,7 +68,7 @@ Du får URL: `https://kolada-mcp.onrender.com/sse`
 5. Sätt secrets:
    ```bash
    flyctl secrets set MCP_MODE=http
-   flyctl secrets set MCP_AUTH_TOKEN=Yry0+YTH3Y6XzmY89S7WOVayw2ksIte1hgedTYC1L9U=
+   flyctl secrets set MCP_AUTH_TOKEN=<din-token>
    ```
 6. Deploy: `flyctl deploy`
 

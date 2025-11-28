@@ -332,7 +332,7 @@ The server also provides 3 resources:
 
 For issues or questions:
 
-- GitHub Issues: https://github.com/KSAklfszf921/kolada-mcp-server/issues
+- GitHub Issues: https://github.com/isakskogstad/kolada-mcp/issues
 - MCP Documentation: https://modelcontextprotocol.io/
 - Kolada API Docs: https://api.kolada.se/v3/docs
 
