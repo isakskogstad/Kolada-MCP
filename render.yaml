@@ -1,11 +1,10 @@
 services:
   - type: web
     name: kolada-mcp-server
-    env: node
+    runtime: docker
     region: frankfurt
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:http
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: MCP_MODE
         value: http
@@ -15,3 +14,4 @@ services:
         sync: false
         # Set this manually in Render Dashboard after deploy
         # Generate with: openssl rand -base64 32
+    healthCheckPath: /health
