@@ -1,12 +1,11 @@
 # Kolada MCP Server
 
-> MCP-server som ger tillgång till svenska kommun- och regiondata via Kolada API v3
 
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
 
-Kolada MCP Server gör det enkelt för AI-klienter (t.ex. ChatGPT, Claude, Cursor) att söka i Koladas öppna data om kommuner, regioner, skolor, äldreboenden och nyckeltal (KPIs) – utan att hantera HTTP-anrop eller API-format.
+Kolada MCP Server ger tillgång till svenska kommun- och regiondata via Kolada API v3. Anslut LLMs eller AI-chatbotar för att enkelt söka i Koladas öppna data om kommuner, regioner, skolor, äldreboenden och nyckeltal (KPIs) – utan att hantera HTTP-anrop eller API-format. Installera lokalt (för ex. claude code, codex m.m.) eller anslut via MCP server remote URL (för ex. ChatGPT, Claude web m.m.)
 
 ---
 
