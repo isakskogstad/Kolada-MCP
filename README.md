@@ -5,7 +5,6 @@
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/kolada-mcp)
 
 ## 🌟 Features
 
@@ -26,53 +25,8 @@
 
 - **3 Resources** for metadata catalogs
   - Complete municipalities list
-  - Full KPI catalog
-  - API information and documentation
+  
 
-### What's New in v2.1.0
-
-- **Tool Annotations (MCP 2024-11-05)** 🆕
-  - `readOnlyHint: true` - All tools are read-only
-  - `idempotentHint: true` - Safe to call multiple times
-  - `destructiveHint: false` - No destructive operations
-  - `openWorldHint: false` - Closed-world data access
-
-- **Structured Logging** 🆕
-  - JSON-formatted logs to stderr
-  - Tool call tracking with timing
-  - Cache hit/miss statistics
-  - API request/response logging
-
-- **Refactored Architecture** 🆕
-  - Shared handlers module eliminates code duplication
-  - Cleaner separation of concerns
-  - Easier maintenance and testing
-
-### Performance & Reliability
-
-- **Intelligent Caching**
-  - In-memory cache with 24h TTL for metadata
-  - Reduces API calls by up to 90%
-  - Automatic cache cleanup
-  - Cache statistics in health endpoint
-
-- **Enhanced Error Handling**
-  - MCP-compliant error codes
-  - Input validation (KPI IDs, municipality IDs, OU IDs)
-  - Helpful error messages with suggestions
-  - Context-aware error reporting
-
-- **Dual Transport Support**
-  - **stdio** - For Claude Desktop and CLI tools
-  - **HTTP/SSE** - For Lovable and web-based clients
-  - Open access (no authentication required)
-
-- **Rate Limiting & Retry Logic**
-  - Automatic rate limiting (5 req/s)
-  - Exponential backoff on failures
-  - Resilient error handling
-
-- **TypeScript** with full type safety and IntelliSense support
 
 ## 📦 Quick Start
 
@@ -195,82 +149,12 @@ npm run dev:http  # Development
 npm run start:http # Production (after npm run build)
 ```
 
-See [LOVABLE.md](./LOVABLE.md) for complete deployment guide including Render, Railway, and Docker.
 
-## 🚀 Free Deployment Options
-
-### One-Click Deploy to Render (Recommended)
-
-Click the button to deploy to Render's free tier:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/isakskogstad/kolada-mcp)
-
-After deployment:
-1. Set `MCP_AUTH_TOKEN` in Render Dashboard
-2. Get your service URL: `https://your-service.onrender.com/sse`
-3. Update Lovable config with your URL and token
-
-**Free tier includes:**
-- ✅ 750 hours/month (always-on)
-- ✅ Automatic HTTPS
-- ✅ Auto-deploy from GitHub
-- ⚠️  Sleeps after 15 min inactivity (use UptimeRobot to keep awake)
-
-### Other Free Options
-
-- **Railway** - $5/month free credit (no sleep) - [Guide](./LOVABLE.md#railway)
-- **Fly.io** - 3 free VMs (no sleep) - [Guide](./LOVABLE.md#flyio)
-- **Cyclic** - 10k requests/month - [Guide](./LOVABLE.md#cyclic)
-
-See [FREE-HOSTING.md](./FREE-HOSTING.md) for detailed comparison and [DEPLOY-RENDER.md](./DEPLOY-RENDER.md) for step-by-step Render deployment.
 
 ## 🎯 Prompts (v2.0)
 
 Kolada MCP Server includes 6 guided analysis workflows that help AI assistants perform common analysis tasks:
 
-### Available Prompts
-
-#### `analyze_municipality`
-Comprehensive analysis of a Swedish municipality's performance.
-
-**Arguments:**
-- `municipality_name` (required): Name of the municipality (e.g., "Stockholm", "Göteborg")
-- `focus_areas` (optional): Specific areas to focus on (e.g., "education", "healthcare")
-
-**Example:**
-```
-Use prompt: analyze_municipality
-Arguments: { municipality_name: "Stockholm", focus_areas: "education and environment" }
-```
-
-#### `compare_municipalities`
-Compare multiple municipalities on selected performance indicators.
-
-**Arguments:**
-- `municipalities` (required): Comma-separated list of municipality names
-- `kpi_topics` (required): Topics to compare (e.g., "schools", "healthcare quality")
-
-#### `trend_analysis`
-Analyze trends over time for specific performance indicators.
-
-**Arguments:**
-- `municipality` (required): Municipality name to analyze
-- `topic` (required): Topic area (e.g., "education quality", "elderly care")
-- `years` (optional): Number of years to analyze (default: 5)
-
-#### `find_schools`
-Find and analyze schools and educational institutions.
-
-**Arguments:**
-- `municipality` (required): Municipality to search in
-- `school_type` (optional): Type of school (e.g., "grundskola", "gymnasium")
-- `school_name` (optional): Specific school name to search for
-
-#### `regional_comparison`
-Compare municipalities within the same region or group.
-
-**Arguments:**
-- `region` (required): Region name or municipality group (e.g., "Stockholm län")
 
 #### `kpi_discovery`
 Discover and explore available key performance indicators.
@@ -279,169 +163,6 @@ Discover and explore available key performance indicators.
 - `query` (optional): Search keywords for KPIs
 - `operating_area` (optional): Operating area filter (e.g., "Utbildning")
 
-## 🛠️ Available Tools
-
-### KPI Tools
-
-#### `search_kpis`
-Search for KPIs by query string, publication date, or operating area.
-
-```typescript
-{
-  query?: string,              // Search term
-  publication_date?: string,   // Filter by date (YYYY-MM-DD)
-  operating_area?: string,     // Operating area filter
-  limit?: number               // Max results (default: 20, max: 100)
-}
-```
-
-#### `get_kpi`
-Get detailed information about a specific KPI by ID.
-
-```typescript
-{
-  kpi_id: string  // e.g., "N15033"
-}
-```
-
-#### `get_kpis`
-Get multiple KPIs by their IDs (max 25 per call).
-
-```typescript
-{
-  kpi_ids: string[]  // Array of KPI IDs
-}
-```
-
-#### `get_kpi_groups`
-List KPI groups with optional search query.
-
-```typescript
-{
-  query?: string  // Search term
-}
-```
-
-#### `get_kpi_group`
-Get detailed information about a specific KPI group.
-
-```typescript
-{
-  group_id: string
-}
-```
-
-### Municipality Tools
-
-#### `search_municipalities`
-Search for Swedish municipalities or county councils.
-
-```typescript
-{
-  query?: string,                      // Search term
-  municipality_type?: 'K' | 'L' | 'all'  // K=Kommun, L=Landsting, all=both
-}
-```
-
-#### `get_municipality`
-Get detailed information about a specific municipality.
-
-```typescript
-{
-  municipality_id: string  // 4-digit code (e.g., "0180" for Stockholm)
-}
-```
-
-#### `get_municipality_groups`
-List municipality groups (metropolitan regions, etc.).
-
-```typescript
-{
-  query?: string  // Search term
-}
-```
-
-#### `get_municipality_group`
-Get detailed information about a municipality group.
-
-```typescript
-{
-  group_id: string
-}
-```
-
-### Organizational Unit Tools
-
-#### `search_organizational_units`
-Search for organizational units (schools, care facilities, etc.).
-
-```typescript
-{
-  query?: string,         // Search term
-  municipality?: string,  // Filter by municipality ID
-  ou_type?: string,       // Filter by OU type (e.g., "V11", "V15")
-  limit?: number          // Max results (default: 20)
-}
-```
-
-#### `get_organizational_unit`
-Get detailed information about a specific organizational unit.
-
-```typescript
-{
-  ou_id: string
-}
-```
-
-#### `get_ou_types`
-Get a list of common organizational unit types.
-
-### Data Retrieval Tools
-
-#### `get_kpi_data`
-Retrieve actual KPI data for municipalities or organizational units.
-
-```typescript
-{
-  kpi_id: string,
-  municipality_id?: string,  // Use this OR ou_id
-  ou_id?: string,            // Use this OR municipality_id
-  years?: number[]           // Filter by years [2020, 2021, 2022]
-}
-```
-
-#### `get_municipality_kpis`
-Get all KPIs available for a specific municipality.
-
-```typescript
-{
-  municipality_id: string,
-  year?: number  // Optional year filter
-}
-```
-
-#### `compare_municipalities`
-Compare a KPI across multiple municipalities.
-
-```typescript
-{
-  kpi_id: string,
-  municipality_ids: string[],  // 2-10 municipalities
-  years?: number[]             // Optional years filter
-}
-```
-
-#### `get_kpi_trend`
-Get historical trend data for a KPI.
-
-```typescript
-{
-  kpi_id: string,
-  municipality_id: string,
-  start_year: number,
-  end_year?: number  // Defaults to current year
-}
-```
 
 ## 📚 Resources
 
@@ -537,44 +258,11 @@ When using Kolada data, please cite as: **"Källa: Kolada"**
 - [API Documentation](https://api.kolada.se/v3/docs)
 - [SKR Website](https://skr.se/)
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run in development mode
-npm run dev
-
-# Lint
-npm run lint
-
-# Format
-npm run format
-```
 
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgements
-
-- [Kolada API](https://www.kolada.se/) for providing access to Swedish municipality data
-- [Model Context Protocol](https://modelcontextprotocol.io/) by Anthropic
-- [koladapy](https://github.com/xemarap/koladapy) - Python wrapper that inspired this implementation
 
 ## ⚠️ Disclaimer
 
