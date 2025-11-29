@@ -33,9 +33,10 @@ const getOuTypesSchema = z.object({});
 export const ouTools = {
   /**
    * Search for organizational units (schools, care facilities, etc.)
+   * NOTE: Results are truncated to 'limit' - check truncated field in response
    */
   search_organizational_units: {
-    description: 'Sök efter organisationsenheter som skolor, förskolor, äldreboenden etc. Filtrera efter namn, kommun eller typ.',
+    description: 'Sök efter organisationsenheter som skolor, förskolor, äldreboenden etc. Filtrera efter namn, kommun eller typ. OBS: Resultat trunkeras till limit (max 100). Kontrollera "truncated" i svaret för att veta om det finns fler träffar.',
     inputSchema: searchOuSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof searchOuSchema>): Promise<ToolResult> => {
@@ -61,6 +62,8 @@ export const ouTools = {
 
         logger.toolResult('search_organizational_units', true, Date.now() - startTime);
 
+        const isTruncated = totalMatches > limit;
+
         return {
           content: [
             {
@@ -69,7 +72,10 @@ export const ouTools = {
                 {
                   count: units.length,
                   total_matches: totalMatches,
-                  truncated: totalMatches > limit,
+                  truncated: isTruncated,
+                  truncation_note: isTruncated
+                    ? `Visar ${units.length} av ${totalMatches} träffar. Öka limit (max 100) eller lägg till fler filter för att få fler resultat.`
+                    : undefined,
                   organizational_units: units.map((u) => ({
                     id: u.id,
                     title: u.title,

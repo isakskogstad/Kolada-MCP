@@ -26,7 +26,7 @@ const getKpiDataSchema = z.object({
 
 const getMunicipalityKpisSchema = z.object({
   municipality_id: z.string().describe('Kommun-ID (4-siffrig kod)'),
-  year: z.number().optional().describe('Filtrera efter specifikt år'),
+  year: z.number().describe('År att hämta KPIs för (obligatoriskt för att undvika timeout)'),
 });
 
 const compareMunicipalitiesSchema = z.object({
@@ -126,9 +126,11 @@ export const dataTools = {
 
   /**
    * Get all available KPIs for a specific municipality
+   * NOTE: This endpoint is unreliable due to Kolada API limitations.
+   * Often times out even for small municipalities. Use search_kpis + get_kpi_data instead.
    */
   get_municipality_kpis: {
-    description: 'Hämta en lista över alla KPIs som har tillgänglig data för en specifik kommun. Valfritt filtrera efter år.',
+    description: '⚠️ EXPERIMENTELL - Ofta timeout pga API-begränsningar. Hämtar KPIs för en kommun/år. REKOMMENDATION: Använd istället search_kpis för att hitta KPIs efter ämne, sedan get_kpi_data för att hämta värden.',
     inputSchema: getMunicipalityKpisSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof getMunicipalityKpisSchema>): Promise<ToolResult> => {
@@ -138,19 +140,19 @@ export const dataTools = {
 
       try {
         // Kolada API v3 uses path-based URLs
-        // Note: This endpoint returns a LOT of data, so we only fetch first page
-        // and extract unique KPIs from that sample
-        let endpoint = `/data/municipality/${municipality_id}`;
-        if (year) {
-          endpoint += `/year/${year}`;
-        }
+        // Year is now required to reduce dataset size
+        const endpoint = `/data/municipality/${municipality_id}/year/${year}`;
 
-        // Just get first page to avoid timeout - this is a discovery tool
-        const response = await koladaClient.request<KPIData>(endpoint, { per_page: 5000 });
+        // Fetch with limited page size to avoid timeout
+        // Use per_page=1000 for faster response, we only need KPI IDs
+        const response = await koladaClient.request<KPIData>(endpoint, { per_page: 1000 });
         const data = response.values || [];
 
-        // Extract unique KPI IDs
+        // Extract unique KPI IDs from this sample
         const kpiIds = [...new Set(data.map((d) => d.kpi))];
+
+        // Check if there's more data (pagination)
+        const hasMore = response.next_page !== undefined;
 
         logger.toolResult('get_municipality_kpis', true, Date.now() - startTime);
 
@@ -161,10 +163,13 @@ export const dataTools = {
               text: JSON.stringify(
                 {
                   municipality_id,
-                  year: year || 'alla',
+                  year,
                   available_kpis: kpiIds,
                   kpi_count: kpiIds.length,
-                  note: 'Använd get_kpi för detaljer om varje KPI, eller get_kpi_data för att hämta faktiska värden',
+                  sample_note: hasMore
+                    ? 'Detta är ett urval av KPIs. Det finns fler tillgängliga. Använd search_kpis för att söka efter specifika KPIs.'
+                    : 'Komplett lista för detta år.',
+                  usage_tip: 'Använd get_kpi för detaljer om varje KPI, eller get_kpi_data för att hämta faktiska värden. För specifika ämnesområden, använd search_kpis med relevanta sökord.',
                 },
                 null,
                 2
@@ -174,6 +179,28 @@ export const dataTools = {
         };
       } catch (error) {
         logger.toolResult('get_municipality_kpis', false, Date.now() - startTime);
+
+        // Provide helpful error message for timeouts
+        if (error instanceof Error && error.message.includes('timeout')) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: 'TIMEOUT',
+                  message: `Förfrågan tog för lång tid för kommun ${municipality_id}, år ${year}`,
+                  suggestion: 'Stora kommuner som Stockholm har mycket data. Använd istället: 1) search_kpis för att hitta specifika KPIs, 2) get_kpi_data för att hämta värden för enskilda KPIs.',
+                  alternative_workflow: [
+                    'search_kpis med query="skola" för utbildnings-KPIs',
+                    'search_kpis med query="vård" för vård-KPIs',
+                    'get_kpi_data med specifik kpi_id och municipality_id'
+                  ]
+                }),
+              },
+            ],
+            isError: true,
+          };
+        }
         throw error;
       }
     },
