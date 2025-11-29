@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/99408392-8535-45e2-abea-435ad47b91ba" alt="Kolada MCP Server" width="800" />
+<img width="849" height="346" alt="KOLADA (3)" src="https://github.com/user-attachments/assets/06392e52-5e5f-4178-b3b7-bc57ec7ba51f" />
+
 </p>
 
 <h1 align="center">Kolada MCP Server</h1>
@@ -37,9 +38,7 @@ Ingen installation krävs – anslut direkt till den hostade servern:
 
 | Transport | URL |
 |-----------|-----|
-| **Streamable HTTP** (rekommenderas) | `https://kolada-mcp-pafn.onrender.com/mcp` |
-| **SSE** (legacy) | `https://kolada-mcp-pafn.onrender.com/sse` |
-
+| **Streamable HTTP** | `https://kolada-mcp-pafn.onrender.com/mcp` |
 ---
 
 ## 📱 Installation per klient
