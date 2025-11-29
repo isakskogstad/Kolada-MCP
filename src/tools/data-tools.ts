@@ -6,7 +6,8 @@ import type { KPIData, ToolAnnotations, ToolResult } from '../config/types.js';
 /**
  * Data Retrieval Tools - 4 tools for fetching actual KPI data
  * All tools are read-only and idempotent
- * @version 2.1.0
+ * Now with gender filtering support (T/M/K)
+ * @version 2.2.0
  */
 
 const READ_ONLY_ANNOTATIONS: ToolAnnotations = {
@@ -22,6 +23,7 @@ const getKpiDataSchema = z.object({
   municipality_id: z.string().optional().describe('Kommun-ID (använd detta ELLER ou_id, inte båda)'),
   ou_id: z.string().optional().describe('Organisationsenhet-ID (använd detta ELLER municipality_id, inte båda)'),
   years: z.array(z.number()).optional().describe('Filtrera efter specifika år (t.ex. [2020, 2021, 2022])'),
+  gender: z.enum(['T', 'M', 'K', 'all']).default('all').describe('Könsfilter: T=Totalt, M=Män, K=Kvinnor, all=visa alla'),
 });
 
 const getMunicipalityKpisSchema = z.object({
@@ -37,6 +39,7 @@ const compareMunicipalitiesSchema = z.object({
     .max(10)
     .describe('Lista med kommun-ID:n att jämföra (2-10 kommuner)'),
   years: z.array(z.number()).optional().describe('Specifika år att inkludera i jämförelsen'),
+  gender: z.enum(['T', 'M', 'K', 'all']).default('all').describe('Könsfilter: T=Totalt, M=Män, K=Kvinnor, all=visa alla'),
 });
 
 const getKpiTrendSchema = z.object({
@@ -44,20 +47,33 @@ const getKpiTrendSchema = z.object({
   municipality_id: z.string().describe('Kommun-ID'),
   start_year: z.number().describe('Startår för trendanalysen'),
   end_year: z.number().optional().describe('Slutår (standard: innevarande år)'),
+  gender: z.enum(['T', 'M', 'K', 'all']).default('all').describe('Könsfilter: T=Totalt, M=Män, K=Kvinnor, all=visa alla'),
 });
+
+/**
+ * Helper function to filter data points by gender
+ */
+function filterByGender(data: KPIData[], gender: 'T' | 'M' | 'K' | 'all'): KPIData[] {
+  if (gender === 'all') return data;
+
+  return data.map(d => ({
+    ...d,
+    values: d.values.filter(v => v.gender === gender || (!v.gender && gender === 'T'))
+  })).filter(d => d.values.length > 0);
+}
 
 export const dataTools = {
   /**
    * Retrieve actual KPI data for municipalities or OUs
    */
   get_kpi_data: {
-    description: 'Hämta faktiska KPI-datavärden för specifika kommuner eller organisationsenheter. Kan filtrera efter år.',
+    description: 'Hämta faktiska KPI-datavärden för specifika kommuner eller organisationsenheter. Kan filtrera efter år och kön (T=Totalt, M=Män, K=Kvinnor).',
     inputSchema: getKpiDataSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof getKpiDataSchema>): Promise<ToolResult> => {
       const startTime = Date.now();
-      const { kpi_id, municipality_id, ou_id, years } = args;
-      logger.toolCall('get_kpi_data', { kpi_id, municipality_id, ou_id, years });
+      const { kpi_id, municipality_id, ou_id, years, gender } = args;
+      logger.toolCall('get_kpi_data', { kpi_id, municipality_id, ou_id, years, gender });
 
       if (!municipality_id && !ou_id) {
         return {
@@ -95,7 +111,10 @@ export const dataTools = {
           }
         }
 
-        const data = await koladaClient.fetchAllData<KPIData>(endpoint);
+        let data = await koladaClient.fetchAllData<KPIData>(endpoint);
+
+        // Apply gender filter
+        data = filterByGender(data, gender);
 
         logger.toolResult('get_kpi_data', true, Date.now() - startTime);
 
@@ -108,6 +127,7 @@ export const dataTools = {
                   kpi_id,
                   entity_id: municipality_id || ou_id,
                   entity_type: municipality_id ? 'kommun' : 'organisationsenhet',
+                  gender_filter: gender,
                   data_points: data,
                   source: 'Kolada - Källa: Kolada',
                 },
@@ -210,13 +230,13 @@ export const dataTools = {
    * Compare a KPI across multiple municipalities
    */
   compare_municipalities: {
-    description: 'Jämför ett specifikt nyckeltal över flera kommuner för angivna år. Utmärkt för benchmarking.',
+    description: 'Jämför ett specifikt nyckeltal över flera kommuner för angivna år. Utmärkt för benchmarking. Stöder könsfiltrering (T/M/K).',
     inputSchema: compareMunicipalitiesSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof compareMunicipalitiesSchema>): Promise<ToolResult> => {
       const startTime = Date.now();
-      const { kpi_id, municipality_ids, years } = args;
-      logger.toolCall('compare_municipalities', { kpi_id, municipality_ids, years });
+      const { kpi_id, municipality_ids, years, gender } = args;
+      logger.toolCall('compare_municipalities', { kpi_id, municipality_ids, years, gender });
 
       try {
         interface ComparisonEntry {
@@ -240,7 +260,10 @@ export const dataTools = {
             endpoint += `/year/${years.join(',')}`;
           }
 
-          const data = await koladaClient.fetchAllData<KPIData>(endpoint);
+          let data = await koladaClient.fetchAllData<KPIData>(endpoint);
+
+          // Apply gender filter
+          data = filterByGender(data, gender);
 
           return {
             municipality_id,
@@ -259,6 +282,7 @@ export const dataTools = {
               text: JSON.stringify(
                 {
                   ...comparison,
+                  gender_filter: gender,
                   source: 'Kolada - Källa: Kolada',
                 },
                 null,
@@ -278,13 +302,13 @@ export const dataTools = {
    * Get historical trend data for a KPI
    */
   get_kpi_trend: {
-    description: 'Hämta historisk trenddata för ett nyckeltal som visar förändringar över tid. Användbart för att analysera utveckling och identifiera trender.',
+    description: 'Hämta historisk trenddata för ett nyckeltal som visar förändringar över tid. Användbart för att analysera utveckling och identifiera trender. Stöder könsfiltrering (T/M/K).',
     inputSchema: getKpiTrendSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof getKpiTrendSchema>): Promise<ToolResult> => {
       const startTime = Date.now();
-      const { kpi_id, municipality_id, start_year, end_year } = args;
-      logger.toolCall('get_kpi_trend', { kpi_id, municipality_id, start_year, end_year });
+      const { kpi_id, municipality_id, start_year, end_year, gender } = args;
+      logger.toolCall('get_kpi_trend', { kpi_id, municipality_id, start_year, end_year, gender });
 
       try {
         const endYr = end_year || new Date().getFullYear();
@@ -293,7 +317,10 @@ export const dataTools = {
         // Kolada API v3 uses path-based URLs
         const endpoint = `/data/kpi/${kpi_id}/municipality/${municipality_id}/year/${years.join(',')}`;
 
-        const data = await koladaClient.fetchAllData<KPIData>(endpoint);
+        let data = await koladaClient.fetchAllData<KPIData>(endpoint);
+
+        // Apply gender filter
+        data = filterByGender(data, gender);
 
         // Calculate year-over-year changes if data exists
         const trend = data.map((d, index) => {
@@ -321,6 +348,7 @@ export const dataTools = {
                   kpi_id,
                   municipality_id,
                   period: `${start_year}-${endYr}`,
+                  gender_filter: gender,
                   trend_data: trend,
                   source: 'Kolada - Källa: Kolada',
                 },

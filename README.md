@@ -13,7 +13,7 @@ Kolada MCP Server ger tillgång till svenska kommun- och regiondata via Kolada A
 
 ### Verktyg (tools)
 
-Servern exponerar 16 verktyg uppdelade i fyra huvudområden:
+Servern exponerar **21 verktyg** uppdelade i fem huvudområden:
 
 - **Nyckeltal (KPIs)**
   - `search_kpis` – fritextsökning på nyckeltal
@@ -34,12 +34,28 @@ Servern exponerar 16 verktyg uppdelade i fyra huvudområden:
   - `get_ou_types` – vanliga enhetstyper (t.ex. förskola, grundskola)
 
 - **Data och jämförelser**
-  - `get_kpi_data` – faktiska värden för ett KPI
+  - `get_kpi_data` – faktiska värden för ett KPI (med könsfiltrering T/M/K)
   - `get_municipality_kpis` – vilka KPIs som finns för en kommun
-  - `compare_municipalities` – jämför kommuner för ett KPI
-  - `get_kpi_trend` – trendöver tid för ett KPI i en kommun
+  - `compare_municipalities` – jämför kommuner för ett KPI (med könsfiltrering)
+  - `get_kpi_trend` – trend över tid för ett KPI i en kommun (med könsfiltrering)
+
+- **Analys (nytt i v2.2.0)** 🆕
+  - `analyze_kpi_across_municipalities` – statistisk analys med min/max/medel/median och ranking
+  - `filter_municipalities_by_kpi` – filtrera kommuner efter tröskelvärden (över/under/mellan)
+  - `compare_kpis` – Pearson-korrelation mellan två KPIs
+  - `list_operating_areas` – lista verksamhetsområden med antal KPIs
+  - `get_kpis_by_operating_area` – filtrera KPIs per verksamhetsområde
 
 Alla verktyg och argument är dokumenterade på svenska direkt i MCP-metadatan, vilket gör det lätt för AI-assistenter att använda servern utan extra dokumentation.
+
+---
+
+## Nyheter i v2.2.0
+
+- **5 nya analysverktyg** för statistik, filtrering och korrelationsanalys
+- **Könsfiltrering (T/M/K)** i alla data-verktyg
+  - T = Totalt, M = Män, K = Kvinnor
+- Batch-hämtning för att hantera stora datamängder utan timeout
 
 ---
 
@@ -120,7 +136,7 @@ https://kolada-mcp-pafn.onrender.com
 
 Kolada är en databas med nyckeltal (KPIs) för svenska kommuner och regioner. Databasen förvaltas av SKR (Sveriges Kommuner och Regioner).
 
-När du använder data från Kolada bör du ange:  
+När du använder data från Kolada bör du ange:
 **"Källa: Kolada"**
 
 Mer information:

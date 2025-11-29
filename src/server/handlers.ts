@@ -12,22 +12,29 @@ import { kpiTools } from '../tools/kpi-tools.js';
 import { municipalityTools } from '../tools/municipality-tools.js';
 import { ouTools } from '../tools/ou-tools.js';
 import { dataTools } from '../tools/data-tools.js';
+import { analysisTools } from '../tools/analysis-tools.js';
 import { koladaClient } from '../api/client.js';
 import { dataCache } from '../utils/cache.js';
 import { logger } from '../utils/logger.js';
 import { analysisPrompts, generatePromptText } from '../prompts/analysis-prompts.js';
 import type { Municipality, KPI } from '../config/types.js';
 
-export const VERSION = '2.1.0';
+export const VERSION = '2.2.0';
 
 /**
- * Combined tool registry
+ * Combined tool registry - 21 tools total
+ * - 5 KPI tools
+ * - 4 Municipality tools
+ * - 3 Organizational Unit tools
+ * - 4 Data Retrieval tools
+ * - 5 Analysis tools (new in v2.2.0)
  */
 export const allTools = {
   ...kpiTools,
   ...municipalityTools,
   ...ouTools,
   ...dataTools,
+  ...analysisTools,
 };
 
 /**
