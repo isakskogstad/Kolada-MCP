@@ -1,7 +1,8 @@
 {
   "name": "kolada-mcp-server",
-  "version": "2.1.0",
-  "description": "MCP server providing access to Swedish municipality and regional data through the Kolada API v3. Features tool annotations, intelligent caching, and dual transport support.",
+  "version": "2.2.1",
+  "mcpName": "io.github.isakskogstad/kolada-mcp",
+  "description": "MCP server for Swedish municipality and regional statistics from Kolada API. Access 6000+ KPIs covering education, healthcare, environment, economy and more for all 290 Swedish municipalities and 21 regions.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
