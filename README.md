@@ -1,26 +1,45 @@
-<img width="1077" height="455" alt="KOLADA (1)" src="https://github.com/user-attachments/assets/99408392-8535-45e2-abea-435ad47b91ba" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/99408392-8535-45e2-abea-435ad47b91ba" alt="Kolada MCP Server" width="800" />
+</p>
 
-# Kolada MCP Server
+<h1 align="center">Kolada MCP Server</h1>
 
-[![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
+<p align="center">
+  <strong>Svenska kommun- och regiondata för AI-assistenter via Model Context Protocol</strong>
+</p>
 
-Kolada MCP Server ger tillgång till svenska kommun- och regiondata via Kolada API v3. Anslut LLMs eller AI-chatbotar för att enkelt söka i Koladas öppna data om kommuner, regioner, skolor, äldreboenden och nyckeltal (KPIs) – utan att hantera HTTP-anrop eller API-format. Installera lokalt (för ex. claude code, codex m.m.) eller anslut via MCP server remote URL (för ex. ChatGPT, Claude web m.m.)
+<p align="center">
+  <a href="https://www.npmjs.com/package/kolada-mcp-server"><img src="https://img.shields.io/npm/v/kolada-mcp-server.svg" alt="npm version" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-2025--03--26-blue.svg" alt="MCP Protocol" /></a>
+</p>
 
 ---
 
-## Snabbstart
+Kolada MCP Server ger LLMs och AI-assistenter direkt tillgång till [Koladas](https://www.kolada.se/) öppna data via [Model Context Protocol](https://modelcontextprotocol.io/). Sök bland 6 000+ nyckeltal för Sveriges 290 kommuner och 21 regioner – utan att hantera HTTP-anrop eller API-format.
 
-### Alternativ A: Fjärrserver (rekommenderas)
+## ✨ Funktioner
 
-Ingen installation krävs – använd den publika MCP-servern:
+- **21 verktyg** för att söka, analysera och jämföra kommundata
+- **Könsuppdelad statistik** (totalt/män/kvinnor)
+- **Trendanalyser** över tid
+- **Benchmarking** mellan kommuner
+- **Korrelationsanalys** mellan nyckeltal
+- Dokumentation på svenska i MCP-metadatan
 
-```text
+---
+
+## 🚀 Snabbstart
+
+### Fjärrserver (rekommenderas)
+
+Ingen installation krävs – anslut direkt:
+
+```
 https://kolada-mcp-pafn.onrender.com/mcp
 ```
 
-Exempel på konfiguration i en MCP-klient:
+**MCP-konfiguration (Streamable HTTP):**
 
 ```json
 {
@@ -32,7 +51,7 @@ Exempel på konfiguration i en MCP-klient:
 }
 ```
 
-#### SSE-transport (t.ex. Lovable)
+**SSE-transport** (för klienter som ännu inte stödjer Streamable HTTP):
 
 ```json
 {
@@ -45,11 +64,7 @@ Exempel på konfiguration i en MCP-klient:
 }
 ```
 
----
-
-### Alternativ B: Lokal installation
-
-Installera via npm:
+### Lokal installation
 
 ```bash
 npm install -g kolada-mcp-server
@@ -60,68 +75,116 @@ Eller från källkod:
 ```bash
 git clone https://github.com/isakskogstad/kolada-mcp.git
 cd kolada-mcp
-npm install
-npm run build
+npm install && npm run build
 ```
 
-## Funktioner
+---
 
-### Verktyg (tools)
+## ✅ Kompatibilitet
 
-Servern exponerar **21 verktyg** uppdelade i fem huvudområden:
+Testad och fungerar med:
 
-- **Nyckeltal (KPIs)**
-  - `search_kpis` – fritextsökning på nyckeltal
-  - `get_kpi` – detaljer för ett KPI
-  - `get_kpis` – hämta flera KPIs samtidigt
-  - `get_kpi_groups` – lista tematiska KPI-grupper
-  - `get_kpi_group` – detaljer för en KPI-grupp
-
-- **Kommuner och regioner**
-  - `search_municipalities` – sök kommuner/regioner
-  - `get_municipality` – detaljer för en kommun
-  - `get_municipality_groups` – lista kommungrupper
-  - `get_municipality_group` – detaljer för kommungrupp
-
-- **Organisationsenheter (skolor, vård m.m.)**
-  - `search_organizational_units` – sök skolor, förskolor, äldreboenden m.m.
-  - `get_organizational_unit` – detaljer för en enhet
-  - `get_ou_types` – vanliga enhetstyper (t.ex. förskola, grundskola)
-
-- **Data och jämförelser**
-  - `get_kpi_data` – faktiska värden för ett KPI (med könsfiltrering T/M/K)
-  - `get_municipality_kpis` – visa tillgängliga KPIs för en kommun (filtrera på verksamhetsområde)
-  - `compare_municipalities` – jämför kommuner för ett KPI (med könsfiltrering)
-  - `get_kpi_trend` – trend över tid för ett KPI i en kommun (med könsfiltrering)
-
-- **Analys (nytt i v2.2.0)** 🆕
-  - `analyze_kpi_across_municipalities` – statistisk analys med min/max/medel/median och ranking
-  - `filter_municipalities_by_kpi` – filtrera kommuner efter tröskelvärden (över/under/mellan)
-  - `compare_kpis` – Pearson-korrelation mellan två KPIs
-  - `list_operating_areas` – lista verksamhetsområden med antal KPIs
-  - `get_kpis_by_operating_area` – filtrera KPIs per verksamhetsområde
-
-Alla verktyg och argument är dokumenterade på svenska direkt i MCP-metadatan, vilket gör det lätt för AI-assistenter att använda servern utan extra dokumentation.
+| Klient | Transport | Status |
+|--------|-----------|--------|
+| Claude Desktop | Streamable HTTP | ✅ |
+| Claude Web | Streamable HTTP | ✅ |
+| Claude Code | Streamable HTTP | ✅ |
+| ChatGPT (dev mode) | Streamable HTTP | ✅ |
+| Codex | Streamable HTTP | ✅ |
+| Gemini | Streamable HTTP | ✅ |
+| Cursor | SSE | ✅ |
 
 ---
 
-## Om Kolada
+## 🛠️ Verktyg
 
-Kolada är en databas med nyckeltal (KPIs) för svenska kommuner och regioner. Databasen förvaltas av SKR (Sveriges Kommuner och Regioner).
+### Nyckeltal (KPIs)
 
-När du använder data från Kolada bör du ange:
-**"Källa: Kolada"**
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_kpis` | Fritextsökning på nyckeltal |
+| `get_kpi` | Detaljer för ett KPI |
+| `get_kpis` | Hämta flera KPIs samtidigt |
+| `get_kpi_groups` | Lista tematiska KPI-grupper |
+| `get_kpi_group` | Detaljer för en KPI-grupp |
 
-Mer information:
+### Kommuner & regioner
 
-- [Kolada – webbplats](https://www.kolada.se/)
-- [Kolada API v3 – dokumentation](https://api.kolada.se/v3/docs)
-- [SKR – webbplats](https://skr.se/)
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_municipalities` | Sök kommuner och regioner |
+| `get_municipality` | Detaljer för en kommun |
+| `get_municipality_groups` | Lista kommungrupper |
+| `get_municipality_group` | Detaljer för kommungrupp |
+
+### Organisationsenheter
+
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_organizational_units` | Sök skolor, förskolor, äldreboenden m.m. |
+| `get_organizational_unit` | Detaljer för en enhet |
+| `get_ou_types` | Enhetstyper (V11=förskola, V15=grundskola, etc.) |
+
+### Data & jämförelser
+
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `get_kpi_data` | Faktiska värden för ett KPI |
+| `get_municipality_kpis` | Tillgängliga KPIs för en kommun |
+| `compare_municipalities` | Jämför kommuner för ett KPI |
+| `get_kpi_trend` | Trend över tid |
+
+### Analys
+
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `analyze_kpi_across_municipalities` | Statistik med min/max/medel/median och ranking |
+| `filter_municipalities_by_kpi` | Filtrera på tröskelvärden |
+| `compare_kpis` | Pearson-korrelation mellan KPIs |
+| `list_operating_areas` | Lista verksamhetsområden |
+| `get_kpis_by_operating_area` | KPIs per verksamhetsområde |
 
 ---
 
-## Licens och ansvar
+## 💡 Exempel
 
-Projektet är licensierat under MIT-licensen – se filen [LICENSE](LICENSE).
+**Sök gymnasiebehörighet i Kungälv:**
+```
+→ search_municipalities("Kungälv") 
+→ get_kpi_data("N15424", municipality_id="1482")
+```
 
-Detta är ett fristående projekt och är inte officiellt knutet till Kolada eller SKR.
+**Jämför skolresultat mellan kommuner:**
+```
+→ compare_municipalities("N15504", ["0180", "1480", "1281"])
+```
+
+**Hitta kommuner med hög lärartäthet:**
+```
+→ filter_municipalities_by_kpi("N11811", operator="lt", threshold=5, year=2023)
+```
+
+---
+
+## 📚 Om Kolada
+
+[Kolada](https://www.kolada.se/) är en öppen databas med nyckeltal för svenska kommuner och regioner. Databasen förvaltas av [RKA](https://rfrka.se/) (Rådet för främjande av kommunala analyser).
+
+Vid användning av data, ange: **Källa: Kolada**
+
+**Resurser:**
+- [Kolada webbplats](https://www.kolada.se/)
+- [Kolada API v3 dokumentation](https://api.kolada.se/v3/docs)
+- [RKA webbplats](https://rfrka.se/)
+
+---
+
+## 📄 Licens
+
+MIT License – se [LICENSE](LICENSE)
+
+---
+
+<p align="center">
+  <sub>Detta är ett community-projekt och är inte officiellt knutet till Kolada eller RKA.</sub>
+</p>
