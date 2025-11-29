@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
   "name": "io.github.isakskogstad/kolada-mcp",
   "title": "Kolada MCP Server",
-  "description": "MCP server for Swedish municipality and regional statistics from Kolada API. Access 6000+ KPIs covering education, healthcare, environment, economy and more for all Swedish municipalities and regions.",
+  "description": "Swedish municipality statistics from Kolada API. 6000+ KPIs for all 290 municipalities.",
   "version": "2.2.1",
   "websiteUrl": "https://github.com/isakskogstad/kolada-mcp",
   "repository": {
@@ -23,11 +23,11 @@
   ],
   "remotes": [
     {
-      "transportType": "streamable-http",
+      "type": "streamable-http",
       "url": "https://kolada-mcp-pafn.onrender.com/mcp"
     },
     {
-      "transportType": "sse",
+      "type": "sse",
       "url": "https://kolada-mcp-pafn.onrender.com/sse"
     }
   ]
