@@ -10,6 +10,60 @@ Kolada MCP Server ger tillgång till svenska kommun- och regiondata via Kolada A
 
 ---
 
+## Snabbstart
+
+### Alternativ A: Fjärrserver (rekommenderas)
+
+Ingen installation krävs – använd den publika MCP-servern:
+
+```text
+https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+Exempel på konfiguration i en MCP-klient:
+
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+#### SSE-transport (t.ex. Lovable)
+
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/sse",
+      "transport": "sse"
+    }
+  }
+}
+```
+
+---
+
+### Alternativ B: Lokal installation
+
+Installera via npm:
+
+```bash
+npm install -g kolada-mcp-server
+```
+
+Eller från källkod:
+
+```bash
+git clone https://github.com/isakskogstad/kolada-mcp.git
+cd kolada-mcp
+npm install
+npm run build
+```
+
 ## Funktioner
 
 ### Verktyg (tools)
@@ -48,95 +102,6 @@ Servern exponerar **21 verktyg** uppdelade i fem huvudområden:
   - `get_kpis_by_operating_area` – filtrera KPIs per verksamhetsområde
 
 Alla verktyg och argument är dokumenterade på svenska direkt i MCP-metadatan, vilket gör det lätt för AI-assistenter att använda servern utan extra dokumentation.
-
----
-
-## Nyheter i v2.2.1
-
-- **Förbättrad `get_municipality_kpis`** – snabb och pålitlig utan timeout
-  - Använder cachad KPI-katalog istället för problematisk API-endpoint
-  - Filtrera på verksamhetsområde för fokuserade resultat
-  - Visar sammanfattning av tillgängliga verksamhetsområden
-
-## Nyheter i v2.2.0
-
-- **5 nya analysverktyg** för statistik, filtrering och korrelationsanalys
-- **Könsfiltrering (T/M/K)** i alla data-verktyg
-  - T = Totalt, M = Män, K = Kvinnor
-- Batch-hämtning för att hantera stora datamängder utan timeout
-
----
-
-## Snabbstart
-
-### Alternativ A: Fjärrserver (rekommenderas)
-
-Ingen installation krävs – använd den publika MCP-servern:
-
-```text
-https://kolada-mcp-pafn.onrender.com/mcp
-```
-
-Exempel på konfiguration i en MCP-klient:
-
-```json
-{
-  "mcpServers": {
-    "kolada": {
-      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
-    }
-  }
-}
-```
-
-#### SSE-transport (t.ex. Lovable)
-
-```json
-{
-  "mcpServers": {
-    "kolada": {
-      "url": "https://kolada-mcp-pafn.onrender.com/sse",
-      "transport": "sse"
-    }
-  }
-}
-```
-
-### Alternativ B: Lokal installation
-
-Installera via npm:
-
-```bash
-npm install -g kolada-mcp-server
-```
-
-Eller från källkod:
-
-```bash
-git clone https://github.com/isakskogstad/kolada-mcp.git
-cd kolada-mcp
-npm install
-npm run build
-```
-
----
-
-## HTTP-server och endpoints
-
-### Publik fjärrserver
-
-```text
-https://kolada-mcp-pafn.onrender.com
-```
-
-### Endpoints
-
-| Endpoint | Metod | Beskrivning |
-|---------|-------|-------------|
-| `/mcp`  | GET/POST | Standard MCP-endpoint (rekommenderad) |
-| `/sse`  | GET | Server-Sent Events för streaming |
-| `/rpc`  | POST | Direkta JSON-RPC-anrop |
-| `/health` | GET | Hälsokontroll |
 
 ---
 
