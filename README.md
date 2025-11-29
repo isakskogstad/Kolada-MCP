@@ -1,20 +1,64 @@
 # Kolada MCP Server
 
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
+[![MCP Registry](https://img.shields.io/badge/MCP-Registry-green.svg)](https://registry.modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.io/)
 
 **MCP server for Swedish municipality and regional statistics from Kolada API.**
 
 Access 6,000+ Key Performance Indicators (KPIs) covering education, healthcare, environment, economy and more for all 290 Swedish municipalities and 21 regions. Connect LLMs and AI assistants to Sweden's most comprehensive open data source for municipal statistics.
 
-## Quick Start
+## Installation
 
-### Option A: Remote Server (Recommended)
+### Option 1: npx (Quickest)
 
-No installation required - use the hosted MCP server:
+Run directly without installation:
 
-**Claude Desktop / MCP Clients:**
+```bash
+npx kolada-mcp-server
+```
+
+### Option 2: Global Install
+
+```bash
+npm install -g kolada-mcp-server
+kolada-mcp-server
+```
+
+### Option 3: Remote Server (No Install)
+
+Use the hosted server - no installation required.
+
+## Configuration
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+**Using npx:**
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "command": "npx",
+      "args": ["-y", "kolada-mcp-server"]
+    }
+  }
+}
+```
+
+**Using global install:**
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "command": "kolada-mcp-server"
+    }
+  }
+}
+```
+
+**Using remote server:**
 ```json
 {
   "mcpServers": {
@@ -25,6 +69,8 @@ No installation required - use the hosted MCP server:
 }
 ```
 
+### Other MCP Clients
+
 **SSE Transport (e.g., Lovable):**
 ```json
 {
@@ -32,23 +78,6 @@ No installation required - use the hosted MCP server:
     "kolada": {
       "url": "https://kolada-mcp-pafn.onrender.com/sse",
       "transport": "sse"
-    }
-  }
-}
-```
-
-### Option B: Local Installation
-
-```bash
-npm install -g kolada-mcp-server
-```
-
-Then add to your MCP client config:
-```json
-{
-  "mcpServers": {
-    "kolada": {
-      "command": "kolada-mcp-server"
     }
   }
 }
