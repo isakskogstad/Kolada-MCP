@@ -1,6 +1,5 @@
 <img width="1077" height="455" alt="KOLADA (1)" src="https://github.com/user-attachments/assets/99408392-8535-45e2-abea-435ad47b91ba" />
 
-
 # Kolada MCP Server
 
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
