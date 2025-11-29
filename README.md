@@ -31,47 +31,205 @@ Kolada MCP Server ger LLMs och AI-assistenter direkt tillgång till [Koladas](ht
 
 ## 🚀 Snabbstart
 
-### Fjärrserver (rekommenderas)
+### Fjärrserver-URL
 
-Ingen installation krävs – anslut direkt:
+Ingen installation krävs – anslut direkt till den hostade servern:
 
+| Transport | URL |
+|-----------|-----|
+| **Streamable HTTP** (rekommenderas) | `https://kolada-mcp-pafn.onrender.com/mcp` |
+| **SSE** (legacy) | `https://kolada-mcp-pafn.onrender.com/sse` |
+
+---
+
+## 📱 Installation per klient
+
+### Claude Web & Claude Desktop
+
+Lägg till som Custom Connector (Pro/Max/Team/Enterprise):
+
+1. Gå till **Settings** → **Connectors**
+2. Klicka **Add custom connector**
+3. Ange URL: `https://kolada-mcp-pafn.onrender.com/mcp`
+4. Klicka **Add**
+
+> 💡 Kräver ingen autentisering – servern är öppen.
+
+---
+
+### Claude Code (CLI)
+
+Lägg till med ett terminalkommando:
+
+```bash
+# Streamable HTTP (rekommenderas)
+claude mcp add --transport http kolada https://kolada-mcp-pafn.onrender.com/mcp
+
+# SSE (alternativ)
+claude mcp add --transport sse kolada https://kolada-mcp-pafn.onrender.com/sse
 ```
-https://kolada-mcp-pafn.onrender.com/mcp
+
+**Scope-alternativ:**
+- `--scope local` – endast aktuellt projekt (default)
+- `--scope project` – delas med teamet via `.mcp.json`
+- `--scope user` – tillgänglig i alla projekt
+
+Verifiera anslutning:
+```bash
+/mcp
 ```
 
-**MCP-konfiguration (Streamable HTTP):**
+---
+
+### ChatGPT (Developer Mode)
+
+ChatGPT stödjer MCP via Custom Connectors:
+
+1. Gå till **Settings** → **Connectors** → **Advanced settings**
+2. Aktivera **Developer Mode**
+3. Klicka **Create** under Custom Connectors
+4. Fyll i:
+   - **Name:** Kolada
+   - **MCP server URL:** `https://kolada-mcp-pafn.onrender.com/mcp`
+5. Klicka **Create**
+
+---
+
+### VS Code (GitHub Copilot)
+
+Skapa `.vscode/mcp.json` i ditt projekt:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "kolada": {
+      "type": "http",
       "url": "https://kolada-mcp-pafn.onrender.com/mcp"
     }
   }
 }
 ```
 
-**SSE-transport** (för klienter som ännu inte stödjer Streamable HTTP):
+**Aktivera:**
+1. Öppna VS Code Settings → sök "MCP"
+2. Aktivera **Chat > MCP**
+3. Byt till **Agent Mode** i Copilot
+4. Klicka **Start** i mcp.json-filen
+
+Alternativt via Command Palette:
+- `Cmd+Shift+P` → **MCP: Add Server** → **HTTP** → ange URL
+
+---
+
+### Cursor
+
+Lägg till i `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "kolada": {
-      "url": "https://kolada-mcp-pafn.onrender.com/sse",
-      "transport": "sse"
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://kolada-mcp-pafn.onrender.com/sse"
+      ]
     }
   }
 }
 ```
 
-### Lokal installation
+> 📝 Cursor använder SSE-transport via `mcp-remote` proxy.
+
+---
+
+### Windsurf
+
+Öppna `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "serverUrl": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+**Via UI:**
+1. **Windsurf Settings** → **Cascade** → **Manage MCPs**
+2. Klicka **Add Custom Server +**
+3. Ange URL: `https://kolada-mcp-pafn.onrender.com/mcp`
+4. Klicka **Refresh Servers**
+
+---
+
+### Gemini CLI
+
+Lägg till i `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "httpUrl": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+Eller via kommando:
+```bash
+gemini mcp add -t http -s user kolada https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+---
+
+### Visual Studio 2022+
+
+Skapa `.mcp.json` i solution-roten:
+
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "type": "http",
+      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+**Aktivera:**
+1. **View** → **GitHub Copilot Chat**
+2. Välj **Agent** i mode-dropdown
+3. Klicka verktygsikonen för att se tillgängliga MCP-verktyg
+
+---
+
+### Lokal installation (stdio)
+
+För offline-användning eller utveckling:
 
 ```bash
 npm install -g kolada-mcp-server
 ```
 
-Eller från källkod:
+Konfiguration för lokala klienter:
 
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "command": "npx",
+      "args": ["-y", "kolada-mcp-server"]
+    }
+  }
+}
+```
+
+Eller från källkod:
 ```bash
 git clone https://github.com/isakskogstad/kolada-mcp.git
 cd kolada-mcp
@@ -82,17 +240,17 @@ npm install && npm run build
 
 ## ✅ Kompatibilitet
 
-Testad och fungerar med:
-
-| Klient | Transport | Status |
-|--------|-----------|--------|
-| Claude Desktop | Streamable HTTP | ✅ |
-| Claude Web | Streamable HTTP | ✅ |
-| Claude Code | Streamable HTTP | ✅ |
-| ChatGPT (dev mode) | Streamable HTTP | ✅ |
-| Codex | Streamable HTTP | ✅ |
-| Gemini | Streamable HTTP | ✅ |
-| Cursor | SSE | ✅ |
+| Klient | Transport | Metod | Status |
+|--------|-----------|-------|--------|
+| Claude Web/Desktop | Streamable HTTP | Custom Connector (UI) | ✅ |
+| Claude Code | Streamable HTTP | CLI: `claude mcp add` | ✅ |
+| ChatGPT | Streamable HTTP | Custom Connector (Developer Mode) | ✅ |
+| VS Code / Copilot | HTTP | `.vscode/mcp.json` | ✅ |
+| Visual Studio | HTTP | `.mcp.json` | ✅ |
+| Cursor | SSE | `~/.cursor/mcp.json` + mcp-remote | ✅ |
+| Windsurf | Streamable HTTP | `mcp_config.json` / UI | ✅ |
+| Gemini CLI | HTTP | `~/.gemini/settings.json` / CLI | ✅ |
+| Stdio (lokal) | stdio | JSON-config med command | ✅ |
 
 ---
 
