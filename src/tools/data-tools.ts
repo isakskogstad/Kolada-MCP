@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { koladaClient } from '../api/client.js';
+import { dataCache } from '../utils/cache.js';
 import { logger } from '../utils/logger.js';
-import type { KPIData, ToolAnnotations, ToolResult } from '../config/types.js';
+import type { KPI, KPIData, Municipality, ToolAnnotations, ToolResult } from '../config/types.js';
 
 /**
  * Data Retrieval Tools - 4 tools for fetching actual KPI data
@@ -28,7 +29,8 @@ const getKpiDataSchema = z.object({
 
 const getMunicipalityKpisSchema = z.object({
   municipality_id: z.string().describe('Kommun-ID (4-siffrig kod)'),
-  year: z.number().describe('År att hämta KPIs för (obligatoriskt för att undvika timeout)'),
+  operating_area: z.string().optional().describe('Filtrera på verksamhetsområde (t.ex. "Utbildning", "Vård"). Använd list_operating_areas för att se tillgängliga områden.'),
+  limit: z.number().min(1).max(50).default(20).describe('Max antal KPIs att returnera (standard: 20, max: 50)'),
 });
 
 const compareMunicipalitiesSchema = z.object({
@@ -145,34 +147,84 @@ export const dataTools = {
   },
 
   /**
-   * Get all available KPIs for a specific municipality
-   * NOTE: This endpoint is unreliable due to Kolada API limitations.
-   * Often times out even for small municipalities. Use search_kpis + get_kpi_data instead.
+   * Get available KPIs for a municipality - uses cached KPI catalog
+   * This approach is reliable and never times out since it uses local data
    */
   get_municipality_kpis: {
-    description: '⚠️ EXPERIMENTELL - Ofta timeout pga API-begränsningar. Hämtar KPIs för en kommun/år. REKOMMENDATION: Använd istället search_kpis för att hitta KPIs efter ämne, sedan get_kpi_data för att hämta värden.',
+    description: 'Visa tillgängliga KPIs för en kommun. Filtrera på verksamhetsområde för att hitta relevanta nyckeltal. Snabb och pålitlig - använder cachad KPI-katalog.',
     inputSchema: getMunicipalityKpisSchema,
     annotations: READ_ONLY_ANNOTATIONS,
     handler: async (args: z.infer<typeof getMunicipalityKpisSchema>): Promise<ToolResult> => {
       const startTime = Date.now();
-      const { municipality_id, year } = args;
-      logger.toolCall('get_municipality_kpis', { municipality_id, year });
+      const { municipality_id, operating_area, limit } = args;
+      logger.toolCall('get_municipality_kpis', { municipality_id, operating_area, limit });
 
       try {
-        // Kolada API v3 uses path-based URLs
-        // Year is now required to reduce dataset size
-        const endpoint = `/data/municipality/${municipality_id}/year/${year}`;
+        // Fetch municipality info to verify it exists and get type
+        const municipalities = await dataCache.getOrFetch(
+          'municipalities-full',
+          () => koladaClient.fetchAllData<Municipality>('/municipality'),
+          86400000
+        );
 
-        // Fetch with limited page size to avoid timeout
-        // Use per_page=1000 for faster response, we only need KPI IDs
-        const response = await koladaClient.request<KPIData>(endpoint, { per_page: 1000 });
-        const data = response.values || [];
+        const municipality = municipalities.find((m) => m.id === municipality_id);
+        if (!municipality) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: 'NOT_FOUND',
+                  message: `Kommun med ID "${municipality_id}" hittades inte`,
+                  suggestion: 'Använd search_municipalities för att hitta giltiga kommun-ID:n',
+                }),
+              },
+            ],
+            isError: true,
+          };
+        }
 
-        // Extract unique KPI IDs from this sample
-        const kpiIds = [...new Set(data.map((d) => d.kpi))];
+        // Fetch KPI catalog (cached)
+        const allKpis = await dataCache.getOrFetch(
+          'kpi-catalog-full',
+          () => koladaClient.fetchAllData<KPI>('/kpi'),
+          86400000
+        );
 
-        // Check if there's more data (pagination)
-        const hasMore = response.next_page !== undefined;
+        // Filter KPIs applicable to this municipality type
+        let applicableKpis = allKpis.filter((k) => {
+          // K = kommun, L = landsting/region, alla = alla typer
+          if (municipality.type === 'K') {
+            return k.municipality_type === 'K' || k.municipality_type === 'alla';
+          } else if (municipality.type === 'L') {
+            return k.municipality_type === 'L' || k.municipality_type === 'alla';
+          }
+          return true;
+        });
+
+        // Filter by operating area if specified
+        if (operating_area) {
+          const areaLower = operating_area.toLowerCase();
+          applicableKpis = applicableKpis.filter((k) =>
+            k.operating_area?.toLowerCase().includes(areaLower)
+          );
+        }
+
+        // Group by operating area for summary
+        const areaGroups: Record<string, number> = {};
+        for (const kpi of applicableKpis) {
+          const area = kpi.operating_area || 'Övrigt';
+          areaGroups[area] = (areaGroups[area] || 0) + 1;
+        }
+
+        // Sort areas by count
+        const sortedAreas = Object.entries(areaGroups)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, count]) => ({ name, count }));
+
+        // Limit results
+        const totalApplicable = applicableKpis.length;
+        const limitedKpis = applicableKpis.slice(0, limit);
 
         logger.toolResult('get_municipality_kpis', true, Date.now() - startTime);
 
@@ -182,14 +234,26 @@ export const dataTools = {
               type: 'text',
               text: JSON.stringify(
                 {
-                  municipality_id,
-                  year,
-                  available_kpis: kpiIds,
-                  kpi_count: kpiIds.length,
-                  sample_note: hasMore
-                    ? 'Detta är ett urval av KPIs. Det finns fler tillgängliga. Använd search_kpis för att söka efter specifika KPIs.'
-                    : 'Komplett lista för detta år.',
-                  usage_tip: 'Använd get_kpi för detaljer om varje KPI, eller get_kpi_data för att hämta faktiska värden. För specifika ämnesområden, använd search_kpis med relevanta sökord.',
+                  municipality: {
+                    id: municipality.id,
+                    name: municipality.title,
+                    type: municipality.type === 'K' ? 'Kommun' : 'Region',
+                  },
+                  filter: operating_area || 'alla verksamhetsområden',
+                  total_applicable_kpis: totalApplicable,
+                  shown_kpis: limitedKpis.length,
+                  operating_areas_summary: sortedAreas,
+                  kpis: limitedKpis.map((k) => ({
+                    id: k.id,
+                    title: k.title,
+                    operating_area: k.operating_area,
+                    is_divided_by_gender: k.is_divided_by_gender,
+                  })),
+                  next_steps: [
+                    'Använd get_kpi för detaljer om ett specifikt KPI',
+                    'Använd get_kpi_data för att hämta faktiska värden',
+                    'Filtrera på operating_area för att smalna av resultaten',
+                  ],
                 },
                 null,
                 2
@@ -199,28 +263,6 @@ export const dataTools = {
         };
       } catch (error) {
         logger.toolResult('get_municipality_kpis', false, Date.now() - startTime);
-
-        // Provide helpful error message for timeouts
-        if (error instanceof Error && error.message.includes('timeout')) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  error: 'TIMEOUT',
-                  message: `Förfrågan tog för lång tid för kommun ${municipality_id}, år ${year}`,
-                  suggestion: 'Stora kommuner som Stockholm har mycket data. Använd istället: 1) search_kpis för att hitta specifika KPIs, 2) get_kpi_data för att hämta värden för enskilda KPIs.',
-                  alternative_workflow: [
-                    'search_kpis med query="skola" för utbildnings-KPIs',
-                    'search_kpis med query="vård" för vård-KPIs',
-                    'get_kpi_data med specifik kpi_id och municipality_id'
-                  ]
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
         throw error;
       }
     },

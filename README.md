@@ -35,7 +35,7 @@ Servern exponerar **21 verktyg** uppdelade i fem huvudområden:
 
 - **Data och jämförelser**
   - `get_kpi_data` – faktiska värden för ett KPI (med könsfiltrering T/M/K)
-  - `get_municipality_kpis` – vilka KPIs som finns för en kommun
+  - `get_municipality_kpis` – visa tillgängliga KPIs för en kommun (filtrera på verksamhetsområde)
   - `compare_municipalities` – jämför kommuner för ett KPI (med könsfiltrering)
   - `get_kpi_trend` – trend över tid för ett KPI i en kommun (med könsfiltrering)
 
@@ -49,6 +49,13 @@ Servern exponerar **21 verktyg** uppdelade i fem huvudområden:
 Alla verktyg och argument är dokumenterade på svenska direkt i MCP-metadatan, vilket gör det lätt för AI-assistenter att använda servern utan extra dokumentation.
 
 ---
+
+## Nyheter i v2.2.1
+
+- **Förbättrad `get_municipality_kpis`** – snabb och pålitlig utan timeout
+  - Använder cachad KPI-katalog istället för problematisk API-endpoint
+  - Filtrera på verksamhetsområde för fokuserade resultat
+  - Visar sammanfattning av tillgängliga verksamhetsområden
 
 ## Nyheter i v2.2.0
 

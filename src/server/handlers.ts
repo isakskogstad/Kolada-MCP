@@ -19,7 +19,7 @@ import { logger } from '../utils/logger.js';
 import { analysisPrompts, generatePromptText } from '../prompts/analysis-prompts.js';
 import type { Municipality, KPI } from '../config/types.js';
 
-export const VERSION = '2.2.0';
+export const VERSION = '2.2.1';
 
 /**
  * Combined tool registry - 21 tools total
