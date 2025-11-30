@@ -31,7 +31,7 @@ jobs:
           OUTPUT_FILE="src/config/kolada-schema.generated.ts"
           
           echo "🔄 Fetching OpenAPI spec from Kolada..."
-          npx openapi-typescript https://api.kolada.se/v3/docs/openapi.json -o $OUTPUT_FILE
+          npx openapi-typescript https://api.kolada.se/v3/openapi.json -o $OUTPUT_FILE
           
           # Lägg till header
           sed -i '1i\/** AUTO-GENERATED FILE - DO NOT EDIT **/' $OUTPUT_FILE
