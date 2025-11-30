@@ -8,7 +8,7 @@
 
 **MCP-server för svensk kommun- och regionstatistik från Kolada API.**
 
-Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal (KPI:er)** inom 264 verksamhetsområden för Sveriges 290 kommuner och 21 regioner. Data omfattar utbildning, vård, ekonomi, miljö, befolkning med mera. Finns både för lokal installation och som hostad remote MCP server med URL.
+Kolada MCP-server kan LLMs ansluta till direkt via remote URL eller genom lokal installation – och genom den få direkt tillgång till data och statistik för **5 000+ nyckeltal (KPI:er)** inom 264 områden (ex. skola, vård, miljö, ekonomi, demokrati o.s.v.) för Sveriges alla kommuner och regioner.
 
 > **English:** Kolada MCP Server connects LLMs and AI chatbots to 5,000+ Key Performance Indicators (KPIs) across 264 operating areas for all 290 Swedish municipalities and 21 regions. Kolada is Sweden's most comprehensive open data source for municipal and regional statistics.
 
