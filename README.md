@@ -8,36 +8,25 @@
 
 **MCP-server för svensk kommun- och regionstatistik från Kolada API.**
 
-Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal (KPI:er)** inom 264 verksamhetsområden för Sveriges 290 kommuner och 21 regioner. Data omfattar utbildning, vård, ekonomi, miljö, befolkning med mera.
+Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal (KPI:er)** inom 264 verksamhetsområden för Sveriges 290 kommuner och 21 regioner. Data omfattar utbildning, vård, ekonomi, miljö, befolkning med mera. Finns både för lokal installation och som hostad remote MCP server med URL.
 
 > **English:** Kolada MCP Server connects LLMs and AI chatbots to 5,000+ Key Performance Indicators (KPIs) across 264 operating areas for all 290 Swedish municipalities and 21 regions. Kolada is Sweden's most comprehensive open data source for municipal and regional statistics.
 
-## Installation
-
-### Fjärrserver (rekommenderas)
-
-Använd den hostade servern direkt – ingen lokal installation krävs:
-
-```
-https://kolada-mcp-pafn.onrender.com/mcp
-```
-
-Se [klientkonfiguration](#klientkonfiguration) nedan för hur du ansluter från din AI-klient.
-
-### Lokal installation
-
-**Med npx (snabbast):**
-```bash
-npx kolada-mcp-server
-```
-
-**Med global installation:**
-```bash
-npm install -g kolada-mcp-server
-kolada-mcp-server
-```
 
 ## Klientkonfiguration
+
+### ChatGPT (Developer Mode)
+
+1. Aktivera **Developer Mode** i ChatGPT-inställningar → Connectors
+2. Klicka **Create** för att skapa en ny connector
+3. Ange:
+   - **Connector name:** Kolada
+   - **Description:** Swedish municipal statistics
+   - **Connector URL:**
+     ```
+     https://kolada-mcp-pafn.onrender.com/mcp
+     ```
+4. Klicka **Create**
 
 ### Claude Web (claude.ai)
 
@@ -100,19 +89,6 @@ Verifiera med:
 claude mcp list
 ```
 
-### ChatGPT (Developer Mode)
-
-1. Aktivera **Developer Mode** i ChatGPT-inställningar → Connectors
-2. Klicka **Create** för att skapa en ny connector
-3. Ange:
-   - **Connector name:** Kolada
-   - **Description:** Swedish municipal statistics
-   - **Connector URL:**
-     ```
-     https://kolada-mcp-pafn.onrender.com/mcp
-     ```
-4. Klicka **Create**
-
 ### OpenAI Codex CLI
 
 Lägg till i `~/.codex/config.toml`:
@@ -172,6 +148,29 @@ Lägg till i `mcp.json` i projektroten:
     }
   }
 }
+```
+
+## Installation
+
+### MCP remote server URL - ingen installation krävs!
+
+```
+https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+Se [klientkonfiguration](#klientkonfiguration) nedan för hur du ansluter från din AI-klient.
+
+### Lokal installation
+
+**Med npx (snabbast):**
+```bash
+npx kolada-mcp-server
+```
+
+**Med global installation:**
+```bash
+npm install -g kolada-mcp-server
+kolada-mcp-server
 ```
 
 ## Verktyg
@@ -266,31 +265,15 @@ Lägg till i `mcp.json` i projektroten:
 | `/rpc` | POST | JSON-RPC |
 | `/health` | GET | Hälsokontroll |
 
-## Exempelanvändning
 
-Fråga din AI-assistent:
-
-- "Hur stor är befolkningen i Stockholm?" → 988 943 (2023)
-- "Vilka kommuner har störst befolkning?"
-- "Jämför utbildningskostnader i Göteborg och Malmö"
-- "Visa trenden för äldreomsorgskostnader i Uppsala de senaste 5 åren"
-- "Hitta nyckeltal för förskoleverksamhet"
 
 ## Om Kolada
 
-[Kolada](https://www.kolada.se/) är databasen för nyckeltal i Sveriges kommuner och regioner. Den förvaltas av SKR (Sveriges Kommuner och Regioner).
+[Kolada](https://www.kolada.se/) tillhandahålls av RKA (Rådet för främjande av kommunala analyser), vilket är en ideell förening som bildats i samarbete mellan staten och Sveriges Kommuner och Regioner, SKR. 
 
-**Datakälla:** Ange "Källa: Kolada" vid användning.
-
-## Länkar
-
-- [Kolada](https://www.kolada.se/)
-- [Kolada API v3](https://api.kolada.se/v3/docs)
-- [SKR](https://skr.se/)
 
 ## Licens
 
 MIT – se [LICENSE](LICENSE)
-Oberoende projekt utan officiell koppling till Kolada eller SKR.
 
 Skapat av Isak Skogstad. 
