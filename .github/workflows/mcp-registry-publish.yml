@@ -1,0 +1,158 @@
+name: Publish to MCP Registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (must match package.json)'
+        required: true
+        default: '2.2.1'
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  validate:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Validate server.json schema
+        run: |
+          npx ajv-cli validate \
+            -s https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json \
+            -d server.json
+
+      - name: Verify version consistency
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          SERVER_VERSION=$(node -p "require('./server.json').version")
+
+          if [ "$PACKAGE_VERSION" != "$SERVER_VERSION" ]; then
+            echo "Version mismatch: package.json ($PACKAGE_VERSION) != server.json ($SERVER_VERSION)"
+            exit 1
+          fi
+
+          echo "Version consistency verified: $PACKAGE_VERSION"
+
+      - name: Verify NPM package exists
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          if npm view kolada-mcp-server@$PACKAGE_VERSION version > /dev/null 2>&1; then
+            echo "NPM package kolada-mcp-server@$PACKAGE_VERSION exists"
+          else
+            echo "NPM package kolada-mcp-server@$PACKAGE_VERSION not found"
+            exit 1
+          fi
+
+      - name: Test remote endpoints
+        run: |
+          # Test HTTP endpoint
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://kolada-mcp-pafn.onrender.com/health)
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "HTTP endpoint health check failed: $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Remote endpoints healthy"
+
+  publish:
+    name: Publish to MCP Registry
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Create registry submission
+        run: |
+          echo "Creating MCP Registry submission..."
+
+          # Create submission directory
+          mkdir -p mcp-registry-submission
+
+          # Copy server.json
+          cp server.json mcp-registry-submission/
+
+          # Create submission metadata
+          cat > mcp-registry-submission/submission.json << EOF
+          {
+            "name": "io.github.isakskogstad/kolada-mcp",
+            "version": "$(node -p 'require("./package.json").version')",
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "submitter": "${{ github.actor }}",
+            "repository": "https://github.com/isakskogstad/kolada-mcp",
+            "commit": "${{ github.sha }}"
+          }
+          EOF
+
+      - name: Upload submission artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-registry-submission
+          path: mcp-registry-submission/
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            server.json
+            mcp-registry-submission/submission.json
+          body: |
+            ## MCP Registry Submission - v${{ github.ref_name }}
+
+            This release contains the MCP Registry submission for Kolada MCP Server.
+
+            ### Configuration
+            - **MCP Name:** io.github.isakskogstad/kolada-mcp
+            - **NPM Package:** kolada-mcp-server@${{ github.ref_name }}
+            - **Remote Endpoint:** https://kolada-mcp-pafn.onrender.com/mcp
+
+            ### Files
+            - `server.json` - MCP Registry configuration
+            - `submission.json` - Submission metadata
+
+            ### Next Steps
+            Submit to MCP Registry following the manual submission process.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display submission instructions
+        run: |
+          echo "========================================="
+          echo "MCP Registry Submission Ready!"
+          echo "========================================="
+          echo ""
+          echo "Your server.json is ready for submission to the MCP Registry."
+          echo ""
+          echo "Next steps:"
+          echo "1. Visit: https://github.com/modelcontextprotocol/servers"
+          echo "2. Fork the repository"
+          echo "3. Add your server.json to: src/servers/io.github.isakskogstad/kolada-mcp.json"
+          echo "4. Create a Pull Request with title: 'Add Kolada MCP Server'"
+          echo ""
+          echo "========================================="
