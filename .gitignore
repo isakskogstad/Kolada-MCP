@@ -41,3 +41,5 @@ coverage/
 
 # Local backups
 backups/
+# Auto-generated API schema
+src/config/*.generated.ts
