@@ -14,9 +14,16 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import express from 'express';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { marked } from 'marked';
 import { dataCache } from './utils/cache.js';
 import { logger } from './utils/logger.js';
 import { createMCPServer, handleRPCRequest, VERSION } from './server/handlers.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const PORT = parseInt(process.env.PORT || '3000');
 
@@ -27,6 +34,131 @@ async function startHTTPServer() {
   const app = express();
 
   app.use(express.json());
+
+  // Root endpoint - serve README.md as HTML
+  app.get('/', (req, res) => {
+    try {
+      // Read README.md from project root
+      const readmePath = join(__dirname, '..', 'README.md');
+      const readmeContent = readFileSync(readmePath, 'utf-8');
+
+      // Convert markdown to HTML
+      const htmlContent = marked(readmeContent);
+
+      // Serve with GitHub-style CSS
+      res.send(`
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kolada MCP Server</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      color: #24292f;
+      background-color: #ffffff;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      line-height: 1.25;
+      border-bottom: 1px solid #d8dee4;
+      padding-bottom: 0.3em;
+    }
+
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.25em; }
+
+    code {
+      background-color: #f6f8fa;
+      padding: 0.2em 0.4em;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 85%;
+    }
+
+    pre {
+      background-color: #f6f8fa;
+      padding: 16px;
+      border-radius: 6px;
+      overflow: auto;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    table th, table td {
+      padding: 6px 13px;
+      border: 1px solid #d8dee4;
+    }
+
+    table th {
+      background-color: #f6f8fa;
+      font-weight: 600;
+    }
+
+    table tr:nth-child(2n) {
+      background-color: #f6f8fa;
+    }
+
+    a {
+      color: #0969da;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    blockquote {
+      padding: 0 1em;
+      color: #656d76;
+      border-left: 0.25em solid #d8dee4;
+      margin: 0 0 16px 0;
+    }
+
+    ul, ol {
+      padding-left: 2em;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+</body>
+</html>
+      `);
+    } catch (error) {
+      logger.error('Error serving README', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).send('Error loading documentation');
+    }
+  });
 
   // Health check endpoint
   app.get('/health', (req, res) => {

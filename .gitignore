@@ -38,3 +38,6 @@ coverage/
 # Misc
 *.tgz
 .cache/
+
+# Local backups
+backups/
