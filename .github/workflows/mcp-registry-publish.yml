@@ -30,8 +30,9 @@ jobs:
           # Download schema
           curl -o schema.json https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json
 
-          # Validate against schema
+          # Validate against schema (disable strict mode to allow 'example' keyword)
           npx ajv-cli validate \
+            --strict=false \
             -s schema.json \
             -d server.json
 
