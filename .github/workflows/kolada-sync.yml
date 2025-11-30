@@ -1,0 +1,72 @@
+name: Kolada API Auto-Sync
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # Körs 04:00 varje natt
+  workflow_dispatch:      # Möjlighet att starta manuellt
+
+jobs:
+  sync-and-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate API Types
+        id: generate
+        run: |
+          OUTPUT_FILE="src/config/kolada-schema.generated.ts"
+          
+          echo "🔄 Fetching OpenAPI spec from Kolada..."
+          npx openapi-typescript https://api.kolada.se/v3/docs/openapi.json -o $OUTPUT_FILE
+          
+          # Lägg till header
+          sed -i '1i\/** AUTO-GENERATED FILE - DO NOT EDIT **/' $OUTPUT_FILE
+          
+          # Kolla om något faktiskt ändrades
+          if [[ -n $(git status --porcelain $OUTPUT_FILE) ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✅ New changes detected in API definition"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          fi
+
+      - name: Safety Check (Gatekeeper)
+        if: steps.generate.outputs.changed == 'true'
+        run: |
+          echo "🛡️ Verifying compatibility..."
+          # Om detta kommando misslyckas (exit code != 0), markerar GitHub jobbet som "Failed"
+          # och skickar automatiskt ett mail till dig: "Workflow Failed"
+          npm test tests/contract/type-safety.test.ts
+          npm run build
+
+      - name: Create Pull Request
+        if: steps.generate.outputs.changed == 'true' && success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: kolada-api-update
+          title: "🤖 API Update: Kolada structure changed"
+          body: |
+            ### 🤖 Kolada API Update Detected
+            Changes detected in Kolada API v3.
+            
+            **Safety Report:**
+            - ✅ Tests Passed
+            - ✅ Build Passed
+            
+            This PR updates the internal schema to match the live API.
