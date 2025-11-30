@@ -1,4 +1,4 @@
-<img width="850" height="371" alt="KOLADA (5)" src="https://github.com/user-attachments/assets/9dd18a33-0f97-4490-af45-5b5a32dc15d0" />
+<img width="1280" height="640" alt="KOLADA (4)" src="https://github.com/user-attachments/assets/8aecfb75-2870-4424-9c61-a24be22aa0e7" />
 
 # Kolada MCP Server
 
@@ -11,6 +11,8 @@
 Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal (KPI:er)** inom 264 verksamhetsområden för Sveriges 290 kommuner och 21 regioner. Data omfattar utbildning, vård, ekonomi, miljö, befolkning med mera. Finns både för lokal installation och som hostad remote MCP server med URL.
 
 > **English:** Kolada MCP Server connects LLMs and AI chatbots to 5,000+ Key Performance Indicators (KPIs) across 264 operating areas for all 290 Swedish municipalities and 21 regions. Kolada is Sweden's most comprehensive open data source for municipal and regional statistics.
+
+https://github.com/user-attachments/assets/6791bb81-79dc-4af3-8028-44c3929d57d0
 
 
 ## Klientkonfiguration
@@ -36,6 +38,8 @@ Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal 
    ```
    https://kolada-mcp-pafn.onrender.com/mcp
    ```
+
+
 4. Klicka **Lägg till**
 
 ### Claude Desktop
