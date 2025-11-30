@@ -1,41 +1,72 @@
+<img width="850" height="371" alt="KOLADA (5)" src="https://github.com/user-attachments/assets/9dd18a33-0f97-4490-af45-5b5a32dc15d0" />
+
 # Kolada MCP Server
 
 [![npm version](https://img.shields.io/npm/v/kolada-mcp-server.svg)](https://www.npmjs.com/package/kolada-mcp-server)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-green.svg)](https://registry.modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**MCP server for Swedish municipality and regional statistics from Kolada API.**
+**MCP-server för svensk kommun- och regionstatistik från Kolada API.**
 
-Access 6,000+ Key Performance Indicators (KPIs) covering education, healthcare, environment, economy and more for all 290 Swedish municipalities and 21 regions. Connect LLMs and AI assistants to Sweden's most comprehensive open data source for municipal statistics.
+Kolada MCP-server ger LLM:er och AI-chatbotar tillgång till **5 000+ nyckeltal (KPI:er)** inom 264 verksamhetsområden för Sveriges 290 kommuner och 21 regioner. Data omfattar utbildning, vård, ekonomi, miljö, befolkning med mera.
+
+> **English:** Kolada MCP Server connects LLMs and AI chatbots to 5,000+ Key Performance Indicators (KPIs) across 264 operating areas for all 290 Swedish municipalities and 21 regions. Kolada is Sweden's most comprehensive open data source for municipal and regional statistics.
 
 ## Installation
 
-### Option 1: npx (Quickest)
+### Fjärrserver (rekommenderas)
 
-Run directly without installation:
+Använd den hostade servern direkt – ingen lokal installation krävs:
 
+```
+https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+Se [klientkonfiguration](#klientkonfiguration) nedan för hur du ansluter från din AI-klient.
+
+### Lokal installation
+
+**Med npx (snabbast):**
 ```bash
 npx kolada-mcp-server
 ```
 
-### Option 2: Global Install
-
+**Med global installation:**
 ```bash
 npm install -g kolada-mcp-server
 kolada-mcp-server
 ```
 
-### Option 3: Remote Server (No Install)
+## Klientkonfiguration
 
-Use the hosted server - no installation required.
+### Claude Web (claude.ai)
 
-## Configuration
+1. Gå till **Inställningar** → **Integreringar** (Connectors)
+2. Klicka **Lägg till anpassad anslutning** (Add custom connector)
+3. Ange URL:
+   ```
+   https://kolada-mcp-pafn.onrender.com/mcp
+   ```
+4. Klicka **Lägg till**
 
 ### Claude Desktop
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Lägg till i konfigurationsfilen:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-**Using npx:**
+**Med fjärrserver:**
+```json
+{
+  "mcpServers": {
+    "kolada": {
+      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+    }
+  }
+}
+```
+
+**Med npx (lokal):**
 ```json
 {
   "mcpServers": {
@@ -47,31 +78,91 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-**Using global install:**
+### Claude Code (CLI)
+
+**Med fjärrserver (HTTP):**
+```bash
+claude mcp add --transport http kolada https://kolada-mcp-pafn.onrender.com/mcp
+```
+
+**Med fjärrserver (SSE):**
+```bash
+claude mcp add --transport sse kolada https://kolada-mcp-pafn.onrender.com/sse
+```
+
+**Med npx (lokal):**
+```bash
+claude mcp add kolada -- npx -y kolada-mcp-server
+```
+
+Verifiera med:
+```bash
+claude mcp list
+```
+
+### ChatGPT (Developer Mode)
+
+1. Aktivera **Developer Mode** i ChatGPT-inställningar → Connectors
+2. Klicka **Create** för att skapa en ny connector
+3. Ange:
+   - **Connector name:** Kolada
+   - **Description:** Swedish municipal statistics
+   - **Connector URL:**
+     ```
+     https://kolada-mcp-pafn.onrender.com/mcp
+     ```
+4. Klicka **Create**
+
+### OpenAI Codex CLI
+
+Lägg till i `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.kolada]
+url = "https://kolada-mcp-pafn.onrender.com/sse"
+```
+
+Eller via CLI:
+```bash
+codex mcp add kolada --url https://kolada-mcp-pafn.onrender.com/sse
+```
+
+### Gemini CLI
+
+Lägg till i `~/.gemini/settings.json`:
+
 ```json
 {
   "mcpServers": {
     "kolada": {
-      "command": "kolada-mcp-server"
+      "url": "https://kolada-mcp-pafn.onrender.com/sse"
     }
   }
 }
 ```
 
-**Using remote server:**
+Eller via CLI:
+```bash
+gemini mcp add kolada --url https://kolada-mcp-pafn.onrender.com/sse
+```
+
+### Firebase Studio / Android Studio
+
+Lägg till i `mcp.json` i projektroten:
+
 ```json
 {
   "mcpServers": {
     "kolada": {
-      "url": "https://kolada-mcp-pafn.onrender.com/mcp"
+      "url": "https://kolada-mcp-pafn.onrender.com/sse"
     }
   }
 }
 ```
 
-### Other MCP Clients
+### Andra MCP-klienter
 
-**SSE Transport (e.g., Lovable):**
+**SSE-transport (t.ex. Lovable):**
 ```json
 {
   "mcpServers": {
@@ -83,104 +174,123 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-## Features
+## Verktyg
 
-### 21 Tools in 5 Categories
+### Nyckeltal (KPI)
 
-**KPI Tools**
-- `search_kpis` - Full-text search for KPIs
-- `get_kpi` - Get KPI details by ID
-- `get_kpis` - Batch fetch multiple KPIs
-- `get_kpi_groups` - List thematic KPI groups
-- `get_kpi_group` - Get group details
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_kpis` | Fritextsökning bland 5 000+ nyckeltal |
+| `get_kpi` | Hämta metadata för ett nyckeltal via ID |
+| `get_kpis` | Hämta flera nyckeltal samtidigt (max 25) |
+| `get_kpi_groups` | Lista tematiska grupper |
+| `get_kpi_group` | Hämta alla nyckeltal i en grupp |
+| `list_operating_areas` | Lista 264 verksamhetsområden |
+| `get_kpis_by_operating_area` | Filtrera nyckeltal per verksamhetsområde |
 
-**Municipality Tools**
-- `search_municipalities` - Search municipalities/regions
-- `get_municipality` - Get municipality details
-- `get_municipality_groups` - List municipality groups
-- `get_municipality_group` - Get group details
+### Kommuner och regioner
 
-**Organizational Unit Tools**
-- `search_organizational_units` - Search schools, care facilities, etc.
-- `get_organizational_unit` - Get unit details
-- `get_ou_types` - List common unit types
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_municipalities` | Sök bland 290 kommuner och 21 regioner |
+| `get_municipality` | Hämta detaljer via kommun-ID (t.ex. "0180") |
+| `get_municipality_groups` | Lista kommungrupper |
+| `get_municipality_group` | Hämta kommuner i en grupp |
 
-**Data Tools**
-- `get_kpi_data` - Get actual KPI values (with gender filtering)
-- `get_municipality_kpis` - List available KPIs for a municipality
-- `compare_municipalities` - Compare municipalities on a KPI
-- `get_kpi_trend` - Historical trend analysis
+### Organisationsenheter
 
-**Analysis Tools**
-- `analyze_kpi_across_municipalities` - Statistical analysis with ranking
-- `filter_municipalities_by_kpi` - Filter by thresholds
-- `compare_kpis` - Pearson correlation between KPIs
-- `list_operating_areas` - List operating areas with KPI counts
-- `get_kpis_by_operating_area` - Filter KPIs by area
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `search_organizational_units` | Sök skolor, äldreboenden m.m. |
+| `get_organizational_unit` | Hämta enhetsdetaljer |
+| `get_ou_types` | Lista enhetstyper |
 
-### Key Features
+### Data
 
-- **Gender Filtering**: Filter data by T (Total), M (Male), K (Female)
-- **Intelligent Caching**: 24-hour cache for KPI and municipality catalogs
-- **Rate Limiting**: Built-in rate limiting respecting Kolada API limits
-- **Dual Transport**: stdio for local, HTTP/SSE for remote
-- **Swedish Documentation**: All tool descriptions in Swedish for optimal AI understanding
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `get_kpi_data` | Hämta värden med könsfiltrering (T/M/K) |
+| `get_municipality_kpis` | Lista KPI:er för en kommun |
+| `compare_municipalities` | Jämför 2–10 kommuner |
+| `get_kpi_trend` | Tidsserieanalys |
 
-## API Endpoints
+### Analys
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mcp` | GET/POST | Standard MCP endpoint (recommended) |
-| `/sse` | GET | Server-Sent Events for streaming |
-| `/rpc` | POST | Direct JSON-RPC calls |
-| `/health` | GET | Health check |
+| Verktyg | Beskrivning |
+|---------|-------------|
+| `analyze_kpi_across_municipalities` | Statistik + rankning |
+| `filter_municipalities_by_kpi` | Filtrera efter tröskelvärde |
+| `compare_kpis` | Korrelation mellan nyckeltal |
 
-## Example Usage
+## Verksamhetsområden (urval)
 
-Ask your AI assistant:
+| Område | Antal KPI:er |
+|--------|-------------|
+| Kommunen, övergripande | 553 |
+| Grundskola åk 0-9 | 470 |
+| Gymnasieskola åk 1-3 | 215 |
+| Hälso- och sjukvård | 204 |
+| Befolkning | 199 |
+| Region/Landsting | 151 |
+| Förskoleverksamhet | 135 |
+| Vuxenutbildning | 126 |
 
-- "What is the population of Stockholm municipality?"
-- "Compare education costs across the 10 largest municipalities"
-- "Show me the trend for elderly care costs in Gothenburg over the last 5 years"
-- "Which municipalities have the highest proportion of renewable energy?"
-- "Find KPIs related to preschool quality"
+*Totalt 264 verksamhetsområden.*
 
-## About Kolada
+## Enhetstyper
 
-[Kolada](https://www.kolada.se/) is the Swedish municipalities and regions database containing key performance indicators. It is maintained by SKR (Swedish Association of Local Authorities and Regions).
+| Kod | Typ |
+|-----|-----|
+| V11 | Förskola |
+| V15 | Grundskola |
+| V16 | Gymnasieskola |
+| V17 | Anpassad skola |
+| V18 | Vuxenutbildning |
+| V21 | Äldreboende |
+| V31 | Fritidshem |
 
-**Data Attribution**: When using Kolada data, please cite as: "Source: Kolada"
+## Huvudfunktioner
 
-## Links
+- **Könsfiltrering** – T (totalt), M (män), K (kvinnor)
+- **Intelligent cachning** – 24-timmarscache för kataloger
+- **Hastighetsbegränsning** – Respekterar Koladas API-gränser
+- **Dubbla transportlägen** – stdio lokalt, HTTP/SSE för fjärråtkomst
+- **Svensk dokumentation** – Optimerat för svenska AI-assistenter
 
-- [Kolada Website](https://www.kolada.se/)
-- [Kolada API v3 Documentation](https://api.kolada.se/v3/docs)
-- [SKR Website](https://skr.se/)
+## API-endpoints
 
-## License
+| Endpoint | Metod | Beskrivning |
+|----------|-------|-------------|
+| `/mcp` | GET/POST | Standard MCP (rekommenderas) |
+| `/sse` | GET | Server-Sent Events |
+| `/rpc` | POST | JSON-RPC |
+| `/health` | GET | Hälsokontroll |
 
-MIT License - see [LICENSE](LICENSE)
+## Exempelanvändning
 
-This is an independent project and is not officially affiliated with Kolada or SKR.
+Fråga din AI-assistent:
 
----
+- "Hur stor är befolkningen i Stockholm?" → 988 943 (2023)
+- "Vilka kommuner har störst befolkning?"
+- "Jämför utbildningskostnader i Göteborg och Malmö"
+- "Visa trenden för äldreomsorgskostnader i Uppsala de senaste 5 åren"
+- "Hitta nyckeltal för förskoleverksamhet"
 
-## Changelog
+## Om Kolada
 
-### v2.2.1
-- Improved `get_municipality_kpis` - fast and reliable using cached catalog
-- Operating area filtering for focused results
+[Kolada](https://www.kolada.se/) är databasen för nyckeltal i Sveriges kommuner och regioner. Den förvaltas av SKR (Sveriges Kommuner och Regioner).
 
-### v2.2.0
-- 5 new analysis tools for statistics, filtering, and correlation
-- Gender filtering (T/M/K) in all data tools
-- Batch fetching for large datasets
+**Datakälla:** Ange "Källa: Kolada" vid användning.
 
-### v2.1.0
-- Added tool annotations for MCP 2024-11-05
-- Improved error handling
+## Länkar
 
-### v2.0.0
-- Complete rewrite with TypeScript
-- HTTP server with SSE support
-- 21 tools covering all Kolada API capabilities
+- [Kolada](https://www.kolada.se/)
+- [Kolada API v3](https://api.kolada.se/v3/docs)
+- [SKR](https://skr.se/)
+
+## Licens
+
+MIT – se [LICENSE](LICENSE)
+Oberoende projekt utan officiell koppling till Kolada eller SKR.
+
+Skapat av Isak Skogstad. 
