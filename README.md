@@ -1,4 +1,5 @@
-<img width="1280" height="640" alt="KOLADA (4)" src="https://github.com/user-attachments/assets/8aecfb75-2870-4424-9c61-a24be22aa0e7" />
+
+<img width="640" height="320" alt="Kolada Banner" src="https://github.com/user-attachments/assets/514f2796-ea48-4e6e-a9c1-20121a7cfeb4" />
 
 # Kolada MCP Server
 
