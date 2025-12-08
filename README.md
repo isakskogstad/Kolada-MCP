@@ -270,14 +270,24 @@ kolada-mcp-server
 | `/health` | GET | Hälsokontroll |
 
 
-
-## Om Kolada
-
-[Kolada](https://www.kolada.se/) tillhandahålls av RKA (Rådet för främjande av kommunala analyser), vilket är en ideell förening som bildats i samarbete mellan staten och Sveriges Kommuner och Regioner, SKR. 
-
-
 ## Licens
 
 MIT – se [LICENSE](LICENSE)
 
 Skapat av Isak Skogstad. 
+
+
+<details>
+<summary><strong>Kolada användarvillkor</strong></summary>
+
+* Utnyttjande av data från Koladas API är avgiftsfritt och kräver inget avtal.
+* Om du använder data från Kolada i en tjänst, ska källan anges ('Källa: Kolada').
+* Gör du egna bearbetningar på vår data, får inte Kolada anges som källa.
+* Det är tillåtet att använda vår data för kommersiella ändamål.
+* API:et får inte användas för att sprida skadlig kod.
+* Du får inte presentera den tjänst du utvecklat som ett 'officiellt samarbete' eller 'partnerskap' med RKA/Kolada.
+* Tjänsten tillhandahålls i befintligt skick.
+* Publicering av data i Kolada sker löpande under året i enlighet med respektive statistikkällas publiceringstidpunkt.
+* Revideringar av data i Kolada kan ske och aviseras inte särskilt.
+* Enskilda nyckeltal kan tas bort ur Kolada t.ex. pga. att underlag för nyckeltalen förändras, vilket inte aviseras.
+</details>
