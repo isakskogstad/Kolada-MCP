@@ -8,34 +8,23 @@ _Kolada MCP Server takes security seriously. This document describes our securit
 
 ## Automatisk Säkerhetsskanning / Automated Security Scanning
 
-Vi använder flera lager av automatisk säkerhetsskanning:
+Vi använder automatisk säkerhetsskanning för att upptäcka säkerhetsbrister:
 
-### 1. **CodeQL Analysis**
+### 1. **Security Scan** (`security-scan.yml`)
 - Kör automatiskt vid varje push och pull request till main
-- Analyserar kod för vanliga säkerhetsbrister
+- Skannar efter exponerade secrets, API-nycklar, lösenord
+- Kontrollerar sårbara dependencies med npm audit
 - Veckovis schemalagd skanning
-- Resultat: GitHub Security → Code scanning alerts
+- Kommenterar på PR:s med åtgärdsförslag
+- Resultat: Workflow artifacts
 
 ### 2. **Secret Scanning**
-Vi använder två verktyg för att upptäcka exponerade hemligheter:
-
-#### GitGuardian
-- Skannar commits för API-nycklar, lösenord och tokens
+Vi använder TruffleHog för att upptäcka exponerade hemligheter:
+- Skannar git-historik för verifierade secrets
 - Kör vid push och pull requests
-- Upptäcker 350+ typer av secrets
+- Integrerad i Security Scan workflow
 
-#### TruffleHog
-- Kompletterande scanning av historiska commits
-- Veckovis schemalagd skanning
-- Verifierar upptäckta secrets
-
-### 3. **Bearer SAST**
-- Static Application Security Testing
-- Identifierar säkerhetsrisker i koden
-- Veckovis schemalagd skanning
-- OWASP Top 10 coverage
-
-### 4. **Dependabot**
+### 3. **Dependabot**
 - Automatiska säkerhetsuppdateringar för dependencies
 - Veckovisa kontroller av npm, GitHub Actions och Docker
 - Automatiska pull requests för säkerhetspatchar
