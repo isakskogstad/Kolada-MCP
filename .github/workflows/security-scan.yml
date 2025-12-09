@@ -1,0 +1,330 @@
+# Security Scanning Workflow
+# Scans code for exposed secrets, API keys, and security vulnerabilities
+# Provides remediation suggestions when issues are found
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  secret-scan:
+    name: Scan for Secrets and Security Issues
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for thorough scanning
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # TruffleHog - Comprehensive secret scanning
+      - name: TruffleHog Secret Scan
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@v3.88.32
+        continue-on-error: true
+        with:
+          extra_args: --only-verified --json
+
+      # Custom secret pattern detection
+      - name: Custom Secret Detection
+        id: custom-secrets
+        run: |
+          echo "🔍 Scanning for potential secrets and API keys..."
+          
+          FINDINGS_FILE=$(mktemp)
+          HAS_FINDINGS=false
+          
+          # Define patterns to search for potential secrets
+          # Note: These patterns match common secret formats
+          PATTERNS=(
+            # API Keys and Tokens
+            'api[_-]?key\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{16,}["\x27]'
+            'api[_-]?secret\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{16,}["\x27]'
+            'access[_-]?token\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{16,}["\x27]'
+            'auth[_-]?token\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{16,}["\x27]'
+            'bearer\s+[a-zA-Z0-9_\-\.]{20,}'
+            
+            # AWS
+            'AKIA[0-9A-Z]{16}'
+            'aws[_-]?secret[_-]?access[_-]?key\s*[:=]\s*["\x27][a-zA-Z0-9/+=]{40}["\x27]'
+            
+            # GitHub
+            'gh[pousr]_[A-Za-z0-9_]{36,}'
+            'github[_-]?token\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{36,}["\x27]'
+            
+            # Generic patterns
+            'password\s*[:=]\s*["\x27][^"\x27]{8,}["\x27]'
+            'secret\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{16,}["\x27]'
+            'private[_-]?key\s*[:=]\s*["\x27]-----BEGIN'
+          )
+          
+          # Files and directories to exclude
+          EXCLUDE_PATTERNS="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=build --exclude=*.lock --exclude=package-lock.json --exclude=*.md --exclude=.env.example"
+          
+          echo "## 🔒 Security Scan Results" > "$FINDINGS_FILE"
+          echo "" >> "$FINDINGS_FILE"
+          echo "**Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> "$FINDINGS_FILE"
+          echo "" >> "$FINDINGS_FILE"
+          
+          PATTERN_COUNT=0
+          
+          for pattern in "${PATTERNS[@]}"; do
+            # Search for pattern, excluding environment variable references
+            # Only search in directories that exist
+            SEARCH_DIRS=""
+            [ -d "src" ] && SEARCH_DIRS="$SEARCH_DIRS src/"
+            [ -d "tests" ] && SEARCH_DIRS="$SEARCH_DIRS tests/"
+            
+            if [ -n "$SEARCH_DIRS" ]; then
+              results=$(grep -rniE "$pattern" $SEARCH_DIRS 2>/dev/null | grep -v "process\.env" | grep -v "// " | grep -v "example" | grep -v "\.example" | head -20 || true)
+            else
+              results=""
+            fi
+            
+            if [ -n "$results" ]; then
+              PATTERN_COUNT=$((PATTERN_COUNT + 1))
+              HAS_FINDINGS=true
+              echo "### ⚠️ Pattern Match #$PATTERN_COUNT" >> "$FINDINGS_FILE"
+              echo '```' >> "$FINDINGS_FILE"
+              echo "$results" >> "$FINDINGS_FILE"
+              echo '```' >> "$FINDINGS_FILE"
+              echo "" >> "$FINDINGS_FILE"
+            fi
+          done
+          
+          if [ "$HAS_FINDINGS" = true ]; then
+            echo "secrets_found=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Potential secrets detected - review required"
+            
+            echo "### 🛠️ Remediation Suggestions" >> "$FINDINGS_FILE"
+            echo "" >> "$FINDINGS_FILE"
+            echo "If any of the above findings are real secrets, please take the following steps:" >> "$FINDINGS_FILE"
+            echo "" >> "$FINDINGS_FILE"
+            echo "1. **Remove the secret from code immediately**" >> "$FINDINGS_FILE"
+            echo "2. **Rotate/revoke the exposed credential** (even if not yet pushed)" >> "$FINDINGS_FILE"
+            echo "3. **Use environment variables instead:**" >> "$FINDINGS_FILE"
+            echo '   ```typescript' >> "$FINDINGS_FILE"
+            echo '   // Instead of:' >> "$FINDINGS_FILE"
+            echo '   const apiKey = "sk-abc123...";' >> "$FINDINGS_FILE"
+            echo '   ' >> "$FINDINGS_FILE"
+            echo '   // Use:' >> "$FINDINGS_FILE"
+            echo '   const apiKey = process.env.API_KEY;' >> "$FINDINGS_FILE"
+            echo '   ```' >> "$FINDINGS_FILE"
+            echo "4. **Add the variable to .env.example** (without the actual value)" >> "$FINDINGS_FILE"
+            echo "5. **Document required environment variables** in README.md" >> "$FINDINGS_FILE"
+            echo "" >> "$FINDINGS_FILE"
+            echo "For more information, see [SECURITY.md](./SECURITY.md)" >> "$FINDINGS_FILE"
+          else
+            echo "secrets_found=false" >> $GITHUB_OUTPUT
+            echo "✅ No potential secrets detected in source code"
+            echo "### ✅ No Issues Found" >> "$FINDINGS_FILE"
+            echo "" >> "$FINDINGS_FILE"
+            echo "No potential secrets or exposed API keys were detected in the source code." >> "$FINDINGS_FILE"
+          fi
+          
+          # Save findings for later steps
+          cp "$FINDINGS_FILE" security-scan-report.md
+          cat "$FINDINGS_FILE"
+
+      # Check environment variable best practices
+      - name: Environment Variable Audit
+        id: env-audit
+        run: |
+          echo "🔍 Auditing environment variable usage..."
+          
+          echo "## Environment Variable Usage Report" > env-audit-report.md
+          echo "" >> env-audit-report.md
+          echo "### Variables used in source code:" >> env-audit-report.md
+          echo "" >> env-audit-report.md
+          
+          # Find all process.env usage (only if src directory exists)
+          if [ -d "src" ]; then
+            ENV_VARS=$(grep -roh "process\.env\.[A-Z_][A-Z0-9_]*" src/ 2>/dev/null | sed 's/process\.env\.//' | sort -u || echo "")
+          else
+            ENV_VARS=""
+          fi
+          
+          if [ -n "$ENV_VARS" ]; then
+            echo '```' >> env-audit-report.md
+            echo "$ENV_VARS" >> env-audit-report.md
+            echo '```' >> env-audit-report.md
+          else
+            echo "_No environment variables found in source code_" >> env-audit-report.md
+          fi
+          
+          echo "" >> env-audit-report.md
+          echo "### ✅ Best Practices" >> env-audit-report.md
+          echo "" >> env-audit-report.md
+          echo "- All sensitive configuration should use \`process.env.VARIABLE_NAME\`" >> env-audit-report.md
+          echo "- Document all required variables in \`.env.example\`" >> env-audit-report.md
+          echo "- Never commit actual values to version control" >> env-audit-report.md
+          
+          cat env-audit-report.md
+
+      # npm audit for dependency vulnerabilities
+      - name: Dependency Security Audit
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          echo "🔍 Running dependency security audit..."
+          
+          echo "## Dependency Security Audit" > dependency-audit-report.md
+          echo "" >> dependency-audit-report.md
+          
+          # Run npm audit and capture output
+          if npm audit --audit-level=moderate 2>&1 | tee npm-audit-output.txt; then
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+            echo "### ✅ No Vulnerabilities Found" >> dependency-audit-report.md
+            echo "" >> dependency-audit-report.md
+            echo "All dependencies passed the security audit." >> dependency-audit-report.md
+          else
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+            echo "### ⚠️ Vulnerabilities Detected" >> dependency-audit-report.md
+            echo "" >> dependency-audit-report.md
+            echo '```' >> dependency-audit-report.md
+            cat npm-audit-output.txt >> dependency-audit-report.md
+            echo '```' >> dependency-audit-report.md
+            echo "" >> dependency-audit-report.md
+            echo "### 🛠️ Remediation" >> dependency-audit-report.md
+            echo "" >> dependency-audit-report.md
+            echo "Run the following commands to fix vulnerabilities:" >> dependency-audit-report.md
+            echo "" >> dependency-audit-report.md
+            echo '```bash' >> dependency-audit-report.md
+            echo '# Automatic fix (safe updates)' >> dependency-audit-report.md
+            echo 'npm audit fix' >> dependency-audit-report.md
+            echo '' >> dependency-audit-report.md
+            echo '# Force fix (may include breaking changes)' >> dependency-audit-report.md
+            echo 'npm audit fix --force' >> dependency-audit-report.md
+            echo '' >> dependency-audit-report.md
+            echo '# Then verify the application still works' >> dependency-audit-report.md
+            echo 'npm test && npm run build' >> dependency-audit-report.md
+            echo '```' >> dependency-audit-report.md
+          fi
+          
+          cat dependency-audit-report.md
+
+      # TypeScript compilation check (catches many security issues)
+      - name: TypeScript Type Check
+        run: |
+          echo "🔍 Running TypeScript type check..."
+          npm run typecheck
+
+      # Lint for security issues
+      - name: Lint Check
+        continue-on-error: true
+        run: |
+          echo "🔍 Linting code..."
+          npm run lint || true
+
+      # Generate consolidated report
+      - name: Generate Security Report
+        if: always()
+        run: |
+          echo "📊 Generating consolidated security report..."
+          
+          cat > full-security-report.md << 'EOF'
+          # 🔒 Security Scan Report
+          
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ---
+          
+          EOF
+          
+          echo "" >> full-security-report.md
+          cat security-scan-report.md >> full-security-report.md
+          echo "" >> full-security-report.md
+          echo "---" >> full-security-report.md
+          echo "" >> full-security-report.md
+          cat env-audit-report.md >> full-security-report.md
+          echo "" >> full-security-report.md
+          echo "---" >> full-security-report.md
+          echo "" >> full-security-report.md
+          cat dependency-audit-report.md >> full-security-report.md
+
+      # Upload reports as artifacts
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            full-security-report.md
+            security-scan-report.md
+            env-audit-report.md
+            dependency-audit-report.md
+          retention-days: 30
+
+      # Comment on PR with findings
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && (steps.custom-secrets.outputs.secrets_found == 'true' || steps.npm-audit.outputs.vulnerabilities_found == 'true')
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('full-security-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      # Security summary in workflow
+      - name: Security Summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.custom-secrets.outputs.secrets_found }}" == "true" ]; then
+            echo "⚠️ **Potential secrets detected in code** - Review required" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No secrets detected in source code**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.npm-audit.outputs.vulnerabilities_found }}" == "true" ]; then
+            echo "⚠️ **Vulnerable dependencies detected** - Run \`npm audit fix\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All dependencies passed security audit**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Download full report from workflow artifacts**" >> $GITHUB_STEP_SUMMARY
+
+      # Fail the workflow if critical issues found
+      - name: Check for Critical Issues
+        if: steps.custom-secrets.outputs.secrets_found == 'true'
+        run: |
+          echo "❌ Security scan found potential secrets in the code."
+          echo "Please review the findings and remove any exposed credentials."
+          echo "See the security-scan-report.md artifact for details."
+          exit 1

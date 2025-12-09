@@ -2,38 +2,28 @@
 
 ## ⚡ Snabbstart / Quick Start
 
-### 1. Lägg till nödvändiga secrets
-Gå till: **Settings → Secrets and variables → Actions**
-
-Lägg till:
-- `GITGUARDIAN_API_KEY` - https://www.gitguardian.com/ (gratis för publika repos)
-- `BEARER_TOKEN` - https://www.bearer.com/ (gratis för open source)
-
-### 2. Verifiera att workflows fungerar
+### 1. Verifiera att workflows fungerar
 - Gå till **Actions** tab
-- Kontrollera att inga workflows failar på grund av saknade secrets
+- Kör **Security Scan** manuellt (workflow_dispatch) för att testa
+- Kontrollera att workflowet slutförs utan fel
 
-### 3. Granska Security-fliken
-- Gå till **Security** tab
-- Kontrollera **Code scanning alerts**
-- Åtgärda eventuella befintliga problem
+### 2. Granska rapporter
+- Gå till workflow run → **Artifacts**
+- Ladda ner och granska **security-reports**
 
 ---
 
 ## 🔍 Vad händer automatiskt? / What Happens Automatically?
 
 ### Vid varje commit/PR:
-- ✅ GitGuardian skannar efter secrets
-- ✅ TruffleHog verifierar inga nya secrets läggs till
-- ✅ CodeQL analyserar kod för säkerhetsbrister
-- ✅ Bearer SAST kontrollerar applikationssäkerhet
-- ✅ Security Audit kör npm audit och kommenterar på PR
+- ✅ TruffleHog skannar git-historik efter verifierade secrets
+- ✅ Söker efter hårdkodade API-nycklar, lösenord, tokens i källkod
+- ✅ npm audit kontrollerar sårbara dependencies
+- ✅ TypeScript type check körs
+- ✅ Kommenterar på PR med resultat och åtgärdsförslag
 
 ### Schemalagt:
-- ✅ **Måndagar 06:00**: CodeQL + Dependabot
-- ✅ **Dagligen 02:00**: Security Audit
-- ✅ **Lördagar 18:00**: Bearer SAST
-- ✅ **Söndagar 00:00**: TruffleHog
+- ✅ **Måndagar 06:00**: Security Scan + Dependabot
 
 ---
 
@@ -43,12 +33,12 @@ Lägg till:
 Du får en notification från GitHub
 
 ### 2. Hitta detaljer
-- **Security tab** → Code scanning alerts
-- **Actions tab** → Workflow run logs
+- **Actions tab** → Security Scan workflow run
+- **Artifacts** → security-reports
 - **PR comments** (om det gäller en PR)
 
 ### 3. Åtgärda problemet
-Security Audit ger konkreta förslag:
+Security Scan ger konkreta förslag:
 
 **För sårbara dependencies:**
 ```bash
@@ -64,44 +54,28 @@ npm audit fix --force
 3. Lägg till i `.env` istället
 4. Använd `process.env.SECRET_NAME`
 
-**För kod-sårbarheter:**
-- Följ förslag från CodeQL/Bearer
-- Uppdatera till säkrare patterns
-- Testa ändringarna
-
 ---
 
 ## 📋 Checklista för PR:s / PR Checklist
 
 Innan merge:
-- [ ] Alla security checks är gröna
-- [ ] Security Audit har inga kritiska fynd
+- [ ] Security Scan har inga kritiska fynd
 - [ ] Inga nya secrets exponerade
 - [ ] Dependencies uppdaterade (om relevant)
-- [ ] SECURITY.md uppdaterad (vid säkerhetsändringar)
 
 ---
 
 ## 🔧 Felsökning / Troubleshooting
 
-### Workflow failar på secret
-**Problem**: `Error: Input required and not supplied: api-key`
-**Lösning**: Lägg till motsvarande secret i repository settings
-
 ### False positives från secret scanning
 **Lösning**: 
 1. Verifiera att det INTE är en riktig secret
 2. Lägg till i `.gitignore` om det är en testfil
-3. Använd GitGuardian's ignore-funktionalitet vid behov
 
 ### Dependabot skapar för många PR:s
 **Lösning**: Detta är normalt första gången. Granska och merge, eller:
 - Stäng PR:s du inte vill ha
 - Justera `open-pull-requests-limit` i `dependabot.yml`
-
-### CodeQL tar lång tid
-**Normal**: CodeQL-analys kan ta 5-10 minuter första gången
-**Optimering**: Redan konfigurerad att köra veckovis
 
 ---
 
@@ -109,18 +83,18 @@ Innan merge:
 
 - **SECURITY.md** - Fullständig säkerhetspolicy
 - **SECURITY_SETUP.md** - Detaljerad teknisk dokumentation
-- **README.md** - Översikt över säkerhetsfunktioner
+- **README.md** - Översikt
 
 ---
 
 ## ✅ Status Check
 
 Ditt repository har nu:
-- ✅ 6 säkerhetsverktyg aktiva
-- ✅ Automatiska sårbarhetsuppdateringar
+- ✅ Automatisk secret scanning
+- ✅ Automatiska sårbarhetsuppdateringar via Dependabot
 - ✅ PR-kommentarer med åtgärdsförslag
 - ✅ Schemalagda säkerhetsskanningar
 - ✅ Dokumenterad säkerhetspolicy
-- ✅ Tydlig rapporteringsprocess
+- ✅ Ingen extern API-konfiguration krävs
 
-**Nästa steg**: Lägg till de två secrets och börja använda systemet! 🚀
+**Redo att använda!** 🚀
