@@ -32,7 +32,7 @@ Lägg till:
 ### Schemalagt:
 - ✅ **Måndagar 06:00**: CodeQL + Dependabot
 - ✅ **Dagligen 02:00**: Security Audit
-- ✅ **Lördagar 18:17**: Bearer SAST
+- ✅ **Lördagar 18:00**: Bearer SAST
 - ✅ **Söndagar 00:00**: TruffleHog
 
 ---

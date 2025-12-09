@@ -92,35 +92,16 @@ jobs:
         id: secret-check
         run: |
           echo "🔍 Checking for potential exposed secrets..."
+          echo "Note: GitGuardian and TruffleHog provide comprehensive secret scanning."
+          echo "This is a basic sanity check for obvious patterns."
           
-          # Check for common secret patterns
-          SECRET_PATTERNS=(
-            "api_key"
-            "apikey"
-            "api-key"
-            "password"
-            "passwd"
-            "secret"
-            "token"
-            "access_token"
-            "auth_token"
-            "private_key"
-            "client_secret"
-          )
-          
-          FOUND_ISSUES=0
-          for pattern in "${SECRET_PATTERNS[@]}"; do
-            if grep -r -i "$pattern\s*=\s*['\"][^'\"]*['\"]" src/ --include="*.ts" --include="*.js" 2>/dev/null | grep -v "process.env" | grep -v "// " | grep -v "examples" > /dev/null; then
-              echo "⚠️ Found potential hardcoded secret pattern: $pattern"
-              FOUND_ISSUES=$((FOUND_ISSUES+1))
-            fi
-          done
-          
-          if [ $FOUND_ISSUES -eq 0 ]; then
-            echo "✅ No hardcoded secrets detected"
-            echo "secrets_found=false" >> $GITHUB_OUTPUT
-          else
+          # Basic check for hardcoded values (not comprehensive)
+          if grep -r -E "(password|secret|token|key)\s*=\s*['\"][^'\"]{8,}" src/ --include="*.ts" --include="*.js" 2>/dev/null | grep -v "process.env" | grep -v "// " | grep -v "example" > /dev/null; then
+            echo "⚠️ Found potential hardcoded values - review manually"
             echo "secrets_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No obvious hardcoded secrets detected"
+            echo "secrets_found=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check environment variable usage
@@ -128,7 +109,11 @@ jobs:
           echo "🔍 Verifying environment variable usage..."
           echo "## Environment Variables Used:" > env-usage-report.md
           echo "" >> env-usage-report.md
-          grep -r "process.env" src/ --include="*.ts" | sed 's/.*process.env\.\([A-Z_]*\).*/\1/' | sort -u >> env-usage-report.md || true
+          # Capture both process.env.VAR and process.env['VAR'] patterns
+          grep -rh "process\.env" src/ --include="*.ts" | \
+            grep -o "process\.env\.\([A-Z_][A-Z0-9_]*\)\|process\.env\[['\"]\\([A-Z_][A-Z0-9_]*\\)['\"]\\]" | \
+            sed -E "s/process\.env\.([A-Z_][A-Z0-9_]*)/\1/; s/process\.env\[['\"]([A-Z_][A-Z0-9_]*)['\"]]/\1/" | \
+            sort -u >> env-usage-report.md || true
           echo "" >> env-usage-report.md
           echo "✅ All configuration properly uses environment variables" >> env-usage-report.md
 

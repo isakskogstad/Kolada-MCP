@@ -70,7 +70,7 @@ This repository now has a complete security configuration with multiple layers o
 | CodeQL | Veckovis | Måndagar 06:00 + push/PR |
 | GitGuardian | Varje commit | push/PR |
 | TruffleHog | Veckovis | Söndagar 00:00 + push/PR |
-| Bearer SAST | Veckovis | Lördagar 18:17 + push/PR |
+| Bearer SAST | Veckovis | Lördagar 18:00 + push/PR |
 | Security Audit | Dagligen | 02:00 + push/PR + manuellt |
 | Dependabot | Veckovis | Måndagar 06:00 |
 

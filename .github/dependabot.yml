@@ -32,9 +32,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Automatically merge security updates for dev dependencies
-    reviewers:
-      - "isakskogstad"
+    # Reviews can be adjusted to team names or multiple reviewers as needed
 
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
