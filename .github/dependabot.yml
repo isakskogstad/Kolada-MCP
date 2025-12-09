@@ -32,6 +32,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Ignore major version updates for packages with known breaking changes
+    # zod 4.x has breaking API changes that require manual migration
+    ignore:
+      - dependency-name: "zod"
+        update-types:
+          - "version-update:semver-major"
     # Reviews can be adjusted to team names or multiple reviewers as needed
 
   # Monitor GitHub Actions
