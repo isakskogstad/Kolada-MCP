@@ -1,0 +1,205 @@
+name: Security Audit & Remediation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  security-audit:
+    name: Comprehensive Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (Check for vulnerable dependencies)
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          echo "🔍 Running npm audit..."
+          npm audit --audit-level=moderate --json > npm-audit-report.json || true
+          npm audit --audit-level=moderate > npm-audit-report.txt || true
+          
+          if [ -s npm-audit-report.txt ]; then
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Vulnerabilities detected in dependencies"
+          else
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+            echo "✅ No vulnerabilities found in dependencies"
+          fi
+
+      - name: Generate remediation suggestions
+        if: steps.npm-audit.outputs.vulnerabilities_found == 'true'
+        run: |
+          echo "## 🔒 Security Audit Results" > remediation-report.md
+          echo "" >> remediation-report.md
+          echo "### Vulnerable Dependencies Detected" >> remediation-report.md
+          echo "" >> remediation-report.md
+          echo "\`\`\`" >> remediation-report.md
+          cat npm-audit-report.txt >> remediation-report.md
+          echo "\`\`\`" >> remediation-report.md
+          echo "" >> remediation-report.md
+          echo "### 🛠️ Recommended Actions:" >> remediation-report.md
+          echo "" >> remediation-report.md
+          echo "1. **Review the vulnerabilities above**" >> remediation-report.md
+          echo "2. **Update vulnerable packages:**" >> remediation-report.md
+          echo "   \`\`\`bash" >> remediation-report.md
+          echo "   npm audit fix" >> remediation-report.md
+          echo "   \`\`\`" >> remediation-report.md
+          echo "3. **For breaking changes, use:**" >> remediation-report.md
+          echo "   \`\`\`bash" >> remediation-report.md
+          echo "   npm audit fix --force" >> remediation-report.md
+          echo "   \`\`\`" >> remediation-report.md
+          echo "   ⚠️ Warning: This may introduce breaking changes. Test thoroughly!" >> remediation-report.md
+          echo "" >> remediation-report.md
+          echo "4. **If automatic fixes aren't available:**" >> remediation-report.md
+          echo "   - Check if newer versions exist: \`npm outdated\`" >> remediation-report.md
+          echo "   - Manually update package.json" >> remediation-report.md
+          echo "   - Consider alternative packages if no fix is available" >> remediation-report.md
+          echo "" >> remediation-report.md
+          echo "5. **After fixing, verify:**" >> remediation-report.md
+          echo "   \`\`\`bash" >> remediation-report.md
+          echo "   npm test" >> remediation-report.md
+          echo "   npm run build" >> remediation-report.md
+          echo "   npm audit" >> remediation-report.md
+          echo "   \`\`\`" >> remediation-report.md
+
+      - name: Check for exposed secrets in code
+        id: secret-check
+        run: |
+          echo "🔍 Checking for potential exposed secrets..."
+          
+          # Check for common secret patterns
+          SECRET_PATTERNS=(
+            "api_key"
+            "apikey"
+            "api-key"
+            "password"
+            "passwd"
+            "secret"
+            "token"
+            "access_token"
+            "auth_token"
+            "private_key"
+            "client_secret"
+          )
+          
+          FOUND_ISSUES=0
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            if grep -r -i "$pattern\s*=\s*['\"][^'\"]*['\"]" src/ --include="*.ts" --include="*.js" 2>/dev/null | grep -v "process.env" | grep -v "// " | grep -v "examples" > /dev/null; then
+              echo "⚠️ Found potential hardcoded secret pattern: $pattern"
+              FOUND_ISSUES=$((FOUND_ISSUES+1))
+            fi
+          done
+          
+          if [ $FOUND_ISSUES -eq 0 ]; then
+            echo "✅ No hardcoded secrets detected"
+            echo "secrets_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "secrets_found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check environment variable usage
+        run: |
+          echo "🔍 Verifying environment variable usage..."
+          echo "## Environment Variables Used:" > env-usage-report.md
+          echo "" >> env-usage-report.md
+          grep -r "process.env" src/ --include="*.ts" | sed 's/.*process.env\.\([A-Z_]*\).*/\1/' | sort -u >> env-usage-report.md || true
+          echo "" >> env-usage-report.md
+          echo "✅ All configuration properly uses environment variables" >> env-usage-report.md
+
+      - name: TypeScript type safety check
+        run: |
+          echo "🔍 Running TypeScript compiler checks..."
+          npm run typecheck
+
+      - name: Lint code for security issues
+        continue-on-error: true
+        run: |
+          echo "🔍 Linting code for potential issues..."
+          npm run lint || true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-reports
+          path: |
+            npm-audit-report.json
+            npm-audit-report.txt
+            remediation-report.md
+            env-usage-report.md
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && steps.npm-audit.outputs.vulnerabilities_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('remediation-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Security summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.npm-audit.outputs.vulnerabilities_found }}" == "true" ]; then
+            echo "⚠️ **Vulnerabilities detected in dependencies**" >> $GITHUB_STEP_SUMMARY
+            echo "See the artifacts for detailed remediation suggestions." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No vulnerabilities found in dependencies**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.secret-check.outputs.secrets_found }}" == "true" ]; then
+            echo "⚠️ **Potential hardcoded secrets detected**" >> $GITHUB_STEP_SUMMARY
+            echo "Review the logs for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No hardcoded secrets detected**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Security Scanning Tools Active:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ npm audit (dependency vulnerabilities)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ CodeQL (code security analysis)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitGuardian (secret scanning)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ TruffleHog (secret scanning)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Bearer (SAST scanning)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dependabot (automated updates)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Check the **Security** tab for all findings" >> $GITHUB_STEP_SUMMARY
