@@ -1,18 +1,24 @@
-name: GitGuardian scan
+name: GitGuardian Secret Scanning
 permissions:
   contents: read
+  security-events: write
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   scanning:
-    name: GitGuardian scan
+    name: Scan for Exposed Secrets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # fetch all history so multiple commits can be scanned
+      
       - name: GitGuardian scan
         uses: GitGuardian/ggshield/actions/secret@v1.45.0
         env:

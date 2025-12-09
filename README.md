@@ -270,6 +270,36 @@ kolada-mcp-server
 | `/rpc` | POST | JSON-RPC |
 | `/health` | GET | Hälsokontroll |
 
+## Säkerhet / Security
+
+Kolada MCP Server använder flera lager av automatisk säkerhetsskanning för att säkerställa kodens integritet och upptäcka sårbarheter:
+
+### 🛡️ Automatiska Säkerhetsverktyg
+
+- **CodeQL**: Kontinuerlig kodanalys för säkerhetsbrister
+- **GitGuardian**: Skannar efter exponerade API-nycklar och hemligheter
+- **TruffleHog**: Kompletterande secret scanning i commit-historik
+- **Bearer SAST**: Static Application Security Testing för applikationssårbarheter
+- **Dependabot**: Automatiska säkerhetsuppdateringar för dependencies
+- **npm audit**: Daglig granskning av sårbara paket
+
+### 📋 Säkerhetspolicy
+
+Se [SECURITY.md](SECURITY.md) för:
+- Hur man rapporterar säkerhetsproblem
+- Detaljer om säkerhetsskanningsprocessen
+- Riktlinjer för säker användning
+- Kontaktinformation
+
+### 🔒 Bästa Praxis
+
+- Inga hårdkodade hemligheter i källkoden
+- Alla känsliga värden hanteras via miljövariabler
+- Rate limiting och timeout-konfigurationer
+- Regelbundna automatiska säkerhetsuppdateringar
+
+**English**: For security policies and vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
 
 ## Licens
 
