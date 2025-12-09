@@ -91,7 +91,16 @@ jobs:
           
           for pattern in "${PATTERNS[@]}"; do
             # Search for pattern, excluding environment variable references
-            results=$(grep -rniE "$pattern" src/ tests/ 2>/dev/null | grep -v "process\.env" | grep -v "// " | grep -v "example" | grep -v "\.example" | head -20 || true)
+            # Only search in directories that exist
+            SEARCH_DIRS=""
+            [ -d "src" ] && SEARCH_DIRS="$SEARCH_DIRS src/"
+            [ -d "tests" ] && SEARCH_DIRS="$SEARCH_DIRS tests/"
+            
+            if [ -n "$SEARCH_DIRS" ]; then
+              results=$(grep -rniE "$pattern" $SEARCH_DIRS 2>/dev/null | grep -v "process\.env" | grep -v "// " | grep -v "example" | grep -v "\.example" | head -20 || true)
+            else
+              results=""
+            fi
             
             if [ -n "$results" ]; then
               PATTERN_COUNT=$((PATTERN_COUNT + 1))
@@ -149,8 +158,12 @@ jobs:
           echo "### Variables used in source code:" >> env-audit-report.md
           echo "" >> env-audit-report.md
           
-          # Find all process.env usage
-          ENV_VARS=$(grep -roh "process\.env\.[A-Z_][A-Z0-9_]*" src/ 2>/dev/null | sed 's/process\.env\.//' | sort -u || echo "")
+          # Find all process.env usage (only if src directory exists)
+          if [ -d "src" ]; then
+            ENV_VARS=$(grep -roh "process\.env\.[A-Z_][A-Z0-9_]*" src/ 2>/dev/null | sed 's/process\.env\.//' | sort -u || echo "")
+          else
+            ENV_VARS=""
+          fi
           
           if [ -n "$ENV_VARS" ]; then
             echo '```' >> env-audit-report.md
