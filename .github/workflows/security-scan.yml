@@ -269,7 +269,7 @@ jobs:
       # Upload reports as artifacts
       - name: Upload Security Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: security-reports
           path: |
