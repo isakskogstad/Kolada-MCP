@@ -41,7 +41,7 @@ jobs:
       # TruffleHog - Comprehensive secret scanning
       - name: TruffleHog Secret Scan
         id: trufflehog
-        uses: trufflesecurity/trufflehog@v3.88.32
+        uses: trufflesecurity/trufflehog@v3.92.3
         continue-on-error: true
         with:
           extra_args: --only-verified --json
